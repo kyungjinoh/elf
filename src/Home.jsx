@@ -60,7 +60,7 @@ function Home() {
     left: Math.random() * 100,
     delay: Math.random() * 5,
     duration: 10 + Math.random() * 10,
-    size: (Math.random() * 4 + 2) * 5,
+    size: (Math.random() * 4 + 2) * 5 / 2, // 2 times bigger than the 4x smaller version
   }))
 
   return (
@@ -73,8 +73,8 @@ function Home() {
         boxSizing: 'border-box'
       }}
     >
-      {/* Snow Effect */}
-      <div className="absolute inset-0 pointer-events-none z-10">
+      {/* Snow Effect - positioned below nav bar, behind all elements */}
+      <div className="absolute top-20 sm:top-24 md:top-28 left-0 right-0 bottom-0 pointer-events-none z-0 overflow-hidden">
         {snowflakes.map((snowflake) => (
           <div
             key={snowflake.id}
@@ -85,6 +85,7 @@ function Home() {
               animationDelay: `${snowflake.delay}s`,
               animationDuration: `${snowflake.duration}s`,
               fontSize: `${snowflake.size}px`,
+              color: 'white',
             }}
           >
             ❄
@@ -93,7 +94,7 @@ function Home() {
       </div>
 
       {/* ELF Header */}
-      <div className="text-center py-1.5 border-b border-gray-200 flex-shrink-0 bg-white/95 backdrop-blur-sm shadow-sm">
+      <div className="text-center py-1.5 border-b border-gray-200 flex-shrink-0 bg-white/95 backdrop-blur-sm shadow-sm relative z-10">
         <img 
           src="/ELF-removebg-preview.png" 
           alt="ELF" 
@@ -102,7 +103,7 @@ function Home() {
       </div>
       
       {/* Top Navigation */}
-      <nav className="flex items-center justify-between px-4 sm:px-6 pt-2 sm:pt-3 pb-1.5 sm:pb-2 flex-shrink-0 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm">
+      <nav className="flex items-center justify-between px-4 sm:px-6 pt-2 sm:pt-3 pb-1.5 sm:pb-2 flex-shrink-0 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm relative z-10">
         <div className="flex-1"></div>
         <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1 justify-center">
           <button className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 transition-all duration-200 hover:text-red-600 cursor-pointer">PLAY</button>
@@ -134,15 +135,30 @@ function Home() {
       </nav>
 
       {/* Main Card Carousel */}
-      <div className={`px-2 sm:px-4 flex-1 flex flex-col justify-center min-h-0 ${isEditingText ? 'overflow-y-auto' : 'overflow-hidden'} pt-4 sm:pt-6 md:pt-8 lg:pt-10 pb-2 sm:pb-3 md:pb-4`}>
-        <div className="relative flex-1 flex items-center min-h-0">
-          {/* Card Container */}
-          <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full h-full max-h-full">
-            {/* Left card (partial) */}
-            <div className="flex-shrink-0 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28"></div>
-            
-            {/* Main Card */}
-            <div className="flex-shrink-0 w-[calc(100%-6rem)] sm:w-[calc(100%-8rem)] md:w-[calc(100%-10rem)] lg:w-[calc(100%-12rem)] xl:w-[calc(100%-14rem)] mx-1 sm:mx-2 rounded-2xl sm:rounded-3xl overflow-hidden snap-center flex flex-col h-[92%] max-h-[92%] my-auto transition-all duration-300">
+      <div className={`px-2 sm:px-4 flex-1 flex flex-col justify-center min-h-0 ${isEditingText ? 'overflow-y-auto' : 'overflow-hidden'} pt-4 sm:pt-6 md:pt-8 lg:pt-10 pb-2 sm:pb-3 md:pb-4 relative z-10`}>
+        <div className="relative flex-1 flex items-center justify-center min-h-0">
+          {/* Main Card - Not draggable */}
+          <div 
+            className="w-[calc(100%-6rem)] sm:w-[calc(100%-8rem)] md:w-[calc(100%-10rem)] lg:w-[calc(100%-12rem)] xl:w-[calc(100%-14rem)] mx-auto rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col h-[92%] max-h-[92%] transition-all duration-300 shadow-lg"
+            style={{
+              transformStyle: 'preserve-3d',
+              perspective: '1000px',
+            }}
+            onMouseMove={(e) => {
+              const card = e.currentTarget
+              const rect = card.getBoundingClientRect()
+              const x = e.clientX - rect.left
+              const y = e.clientY - rect.top
+              const centerX = rect.width / 2
+              const centerY = rect.height / 2
+              const rotateX = (y - centerY) / 20
+              const rotateY = (centerX - x) / 20
+              card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)'
+            }}
+          >
               {/* Orange Top Section */}
               <div className="flex-[3] flex flex-col items-center justify-center py-6 sm:py-8 md:py-10 lg:py-12 xl:py-14 relative" style={{ backgroundColor: '#be2616' }}>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10"></div>
@@ -178,7 +194,7 @@ function Home() {
               </div>
 
               {/* White Bottom Section */}
-              <div ref={textContainerRef} className="flex-[1] flex items-center justify-center bg-white py-4 sm:py-5 md:py-6 lg:py-7 xl:py-8 px-3 sm:px-4">
+              <div ref={textContainerRef} className="flex-[1.5] flex items-center justify-center bg-white py-6 sm:py-8 md:py-10 lg:py-12 xl:py-14 px-3 sm:px-4">
                 {isEditingText ? (
                   <input
                     ref={textInputRef}
@@ -192,80 +208,85 @@ function Home() {
                         e.target.blur()
                       }
                     }}
-                    className="text-center text-gray-800 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold leading-tight tracking-tight w-full bg-transparent border-b-2 border-red-500 focus:outline-none focus:border-red-600"
+                    className="text-center text-gray-800 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-relaxed tracking-tight w-full bg-transparent border-b-2 border-red-500 focus:outline-none focus:border-red-600"
                     autoFocus
                   />
                 ) : (
                   <p
                     onClick={handleTextFocus}
-                    className="text-center text-gray-800 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold leading-tight tracking-tight cursor-text hover:bg-gray-50 rounded px-2 py-1 transition-colors"
+                    className="text-center text-gray-800 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-relaxed tracking-tight cursor-text hover:bg-gray-50 rounded px-2 py-1 transition-colors break-words"
                   >
                     {cardText || 'send a name for a friendship tbh'}
                   </p>
                 )}
               </div>
             </div>
-
-            {/* Right card (partial) */}
-            <div className="flex-shrink-0 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28"></div>
-          </div>
         </div>
       </div>
 
       {/* Link & Share Section */}
-      <div className="px-6 sm:px-8 md:px-10 lg:px-12 xl:px-16 mt-2 sm:mt-3 md:mt-4 space-y-2 sm:space-y-2.5 md:space-y-3 pb-6 sm:pb-8 md:pb-10 lg:pb-12 flex-shrink-0">
+      <div className="px-6 sm:px-8 md:px-10 lg:px-12 xl:px-16 mt-2 sm:mt-3 md:mt-4 space-y-2 sm:space-y-2.5 md:space-y-3 pb-6 sm:pb-8 md:pb-10 lg:pb-12 flex-shrink-0 relative z-10">
         {/* Step 1: Copy Link */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 shadow-lg border border-red-100/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
-          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-3 sm:mb-4 md:mb-5 text-center tracking-tight">
+        <div className="backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 shadow-lg border border-red-200/60 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]" style={{ backgroundColor: 'rgba(255, 204, 203, 0.85)' }}>
+          <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 md:mb-5 text-center tracking-tight">
             Step 1: Copy your link
           </h3>
-          <div className="text-gray-600 text-xs sm:text-sm md:text-base mb-3 sm:mb-4 md:mb-5 lg:mb-6 font-mono tracking-wide text-center break-all px-2 bg-gray-50/50 rounded-lg py-2 border border-gray-200/50">
+          <div className="text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 md:mb-5 lg:mb-6 font-sans font-medium tracking-wide text-center break-all px-2 rounded-lg py-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
             NGL.LINK/KINGEBERE_/TBH
           </div>
-          <button
-            onClick={handleCopyLink}
-            className="w-full py-2.5 sm:py-3 md:py-3.5 lg:py-4 px-3 sm:px-4 rounded-3xl border-2 bg-white font-semibold transition-all duration-300 text-xs sm:text-sm md:text-base hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
-            style={{
-              borderColor: '#be2616',
-              color: '#be2616',
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#fef2f2'
-              e.target.style.borderColor = '#dc2626'
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white'
-              e.target.style.borderColor = '#be2616'
-            }}
-          >
-            {linkCopied ? 'Copied!' : 'copy link'}
-          </button>
+          <div className="flex justify-center">
+            <div 
+              className="w-1/2 sm:w-2/5 md:w-1/3 rounded-3xl p-[3px] transition-all duration-300 hover:scale-105 active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #ef4444 100%)',
+              }}
+            >
+              <button
+                onClick={handleCopyLink}
+                className="w-full py-1.5 sm:py-2 md:py-2.5 lg:py-3 px-3 sm:px-4 rounded-3xl bg-white font-semibold transition-all duration-300 text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                style={{
+                  color: '#be2616',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#fef2f2'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'white'
+                }}
+              >
+                <span className="text-base sm:text-lg md:text-xl">🔗</span>
+                <span>{linkCopied ? 'Copied!' : 'copy link'}</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Step 2: Share Link */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-7 lg:p-8 shadow-lg border border-red-100/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
-          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-5 sm:mb-6 md:mb-7 text-center tracking-tight">
-            Step 2: Share link on your Instagram Story
+        <div className="backdrop-blur-sm rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-7 lg:p-8 shadow-lg border border-red-200/60 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]" style={{ backgroundColor: 'rgba(255, 204, 203, 0.85)' }}>
+          <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-5 sm:mb-6 md:mb-7 text-center tracking-tight">
+            Step 2: Share link on your Story
           </h3>
-          <button className="w-full py-4 sm:py-4.5 md:py-5 lg:py-6 px-3 sm:px-4 rounded-3xl text-white font-semibold shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm md:text-base hover:scale-105 active:scale-95 transform" style={{ background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #ef4444 100%)' }}>
-            <div className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border-2 border-white/90 flex items-center justify-center backdrop-blur-sm shadow-inner">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={3}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-            </div>
-            <span className="drop-shadow-sm">Share!</span>
-          </button>
+          <div className="flex justify-center">
+            <button className="w-3/4 sm:w-2/3 md:w-1/2 py-4 sm:py-4.5 md:py-5 lg:py-6 px-3 sm:px-4 rounded-3xl text-white font-semibold shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transform" style={{ background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #ef4444 100%)' }}>
+              <div className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border-2 border-white/90 flex items-center justify-center backdrop-blur-sm shadow-inner">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </div>
+              <span className="drop-shadow-sm text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl">Share!</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
