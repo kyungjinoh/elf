@@ -142,12 +142,12 @@ function Home() {
             <div className="flex-shrink-0 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28"></div>
             
             {/* Main Card */}
-            <div className="flex-shrink-0 w-[calc(100%-6rem)] sm:w-[calc(100%-8rem)] md:w-[calc(100%-10rem)] lg:w-[calc(100%-12rem)] xl:w-[calc(100%-14rem)] mx-1 sm:mx-2 rounded-2xl sm:rounded-3xl overflow-hidden snap-center flex flex-col h-[85%] max-h-[85%] my-auto transition-all duration-300">
+            <div className="flex-shrink-0 w-[calc(100%-6rem)] sm:w-[calc(100%-8rem)] md:w-[calc(100%-10rem)] lg:w-[calc(100%-12rem)] xl:w-[calc(100%-14rem)] mx-1 sm:mx-2 rounded-2xl sm:rounded-3xl overflow-hidden snap-center flex flex-col h-[92%] max-h-[92%] my-auto transition-all duration-300">
               {/* Orange Top Section */}
-              <div className="flex-[3] flex flex-col items-center justify-center py-3 sm:py-4 md:py-5 lg:py-6 xl:py-7 relative" style={{ backgroundColor: '#be2616' }}>
+              <div className="flex-[3] flex flex-col items-center justify-center py-6 sm:py-8 md:py-10 lg:py-12 xl:py-14 relative" style={{ backgroundColor: '#be2616' }}>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10"></div>
                 {/* Profile Image */}
-                <div className="flex justify-center mb-2 sm:mb-3 md:mb-4 lg:mb-5 relative z-10">
+                <div className="flex justify-center mb-4 sm:mb-5 md:mb-6 lg:mb-7 xl:mb-8 relative z-10">
                   <div className="relative group">
                     <div className="absolute inset-0 rounded-full bg-white/20 blur-xl"></div>
                     <input
@@ -178,7 +178,7 @@ function Home() {
               </div>
 
               {/* White Bottom Section */}
-              <div ref={textContainerRef} className="flex-[1] flex items-center justify-center bg-white py-1.5 sm:py-2 md:py-2.5 lg:py-3 xl:py-4 px-3 sm:px-4">
+              <div ref={textContainerRef} className="flex-[1] flex items-center justify-center bg-white py-4 sm:py-5 md:py-6 lg:py-7 xl:py-8 px-3 sm:px-4">
                 {isEditingText ? (
                   <input
                     ref={textInputRef}
@@ -215,16 +215,16 @@ function Home() {
       {/* Link & Share Section */}
       <div className="px-6 sm:px-8 md:px-10 lg:px-12 xl:px-16 mt-2 sm:mt-3 md:mt-4 space-y-2 sm:space-y-2.5 md:space-y-3 pb-6 sm:pb-8 md:pb-10 lg:pb-12 flex-shrink-0">
         {/* Step 1: Copy Link */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-7 lg:p-8 shadow-lg border border-red-100/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
-          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-5 sm:mb-6 md:mb-7 text-center tracking-tight">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 shadow-lg border border-red-100/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
+          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-3 sm:mb-4 md:mb-5 text-center tracking-tight">
             Step 1: Copy your link
           </h3>
-          <div className="text-gray-600 text-xs sm:text-sm md:text-base mb-5 sm:mb-6 md:mb-7 lg:mb-8 font-mono tracking-wide text-center break-all px-2 bg-gray-50/50 rounded-lg py-2 border border-gray-200/50">
+          <div className="text-gray-600 text-xs sm:text-sm md:text-base mb-3 sm:mb-4 md:mb-5 lg:mb-6 font-mono tracking-wide text-center break-all px-2 bg-gray-50/50 rounded-lg py-2 border border-gray-200/50">
             NGL.LINK/KINGEBERE_/TBH
           </div>
           <button
             onClick={handleCopyLink}
-            className="w-full py-3.5 sm:py-4 md:py-4.5 lg:py-5 px-3 sm:px-4 rounded-3xl border-2 bg-white font-semibold transition-all duration-300 text-xs sm:text-sm md:text-base hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+            className="w-full py-2.5 sm:py-3 md:py-3.5 lg:py-4 px-3 sm:px-4 rounded-3xl border-2 bg-white font-semibold transition-all duration-300 text-xs sm:text-sm md:text-base hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
             style={{
               borderColor: '#be2616',
               color: '#be2616',
