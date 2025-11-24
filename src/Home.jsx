@@ -54,13 +54,13 @@ function Home() {
     }
   }, [isEditingText])
 
-  // Generate snowflakes
-  const snowflakes = Array.from({ length: 50 }, (_, i) => ({
+  // Generate snow circles
+  const snowCircles = Array.from({ length: 80 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
     delay: Math.random() * 5,
     duration: 10 + Math.random() * 10,
-    size: (Math.random() * 4 + 2) * 5 / 2, // 2 times bigger than the 4x smaller version
+    size: (Math.random() * 3 + 1) * 2, // Smaller circles
   }))
 
   return (
@@ -75,21 +75,20 @@ function Home() {
     >
       {/* Snow Effect - positioned below nav bar, behind all elements */}
       <div className="absolute top-12 sm:top-14 md:top-16 left-0 right-0 bottom-0 pointer-events-none z-0 overflow-hidden">
-        {snowflakes.map((snowflake) => (
+        {snowCircles.map((circle) => (
           <div
-            key={snowflake.id}
-            className="absolute text-white snowflake"
+            key={circle.id}
+            className="absolute snowflake rounded-full bg-white"
             style={{
-              left: `${snowflake.left}%`,
+              left: `${circle.left}%`,
               top: '-100px',
-              animationDelay: `${snowflake.delay}s`,
-              animationDuration: `${snowflake.duration}s`,
-              fontSize: `${snowflake.size}px`,
-              color: 'white',
+              animationDelay: `${circle.delay}s`,
+              animationDuration: `${circle.duration}s`,
+              width: `${circle.size}px`,
+              height: `${circle.size}px`,
+              opacity: 0.7,
             }}
-          >
-            ❄
-          </div>
+          />
         ))}
       </div>
 
