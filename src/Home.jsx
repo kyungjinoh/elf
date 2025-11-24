@@ -64,7 +64,20 @@ function Home() {
   }))
 
   return (
-    <div className={`${isEditingText ? 'overflow-y-auto' : 'overflow-hidden'} flex flex-col relative`} style={{ background: 'linear-gradient(to bottom, #ffcccb, #ff6b6b)', height: '100dvh', minHeight: '100vh' }}>
+    <div 
+      className={`${isEditingText ? 'overflow-y-auto' : 'overflow-hidden'} flex flex-col relative`} 
+      style={{ 
+        background: 'linear-gradient(to bottom, #ffcccb, #ff6b6b)', 
+        height: '100dvh',
+        minHeight: '100vh',
+        maxHeight: '100dvh',
+        paddingTop: 'max(env(safe-area-inset-top, 0), 0px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0), 0px)',
+        paddingLeft: 'max(env(safe-area-inset-left, 0), 0px)',
+        paddingRight: 'max(env(safe-area-inset-right, 0), 0px)',
+        boxSizing: 'border-box'
+      }}
+    >
       {/* Snow Effect */}
       <div className="absolute inset-0 pointer-events-none z-10">
         {snowflakes.map((snowflake) => (
