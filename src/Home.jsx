@@ -74,7 +74,7 @@ function Home() {
       }}
     >
       {/* Snow Effect - positioned below nav bar, behind all elements */}
-      <div className="absolute top-20 sm:top-24 md:top-28 left-0 right-0 bottom-0 pointer-events-none z-0 overflow-hidden">
+      <div className="absolute top-12 sm:top-14 md:top-16 left-0 right-0 bottom-0 pointer-events-none z-0 overflow-hidden">
         {snowflakes.map((snowflake) => (
           <div
             key={snowflake.id}
@@ -93,18 +93,15 @@ function Home() {
         ))}
       </div>
 
-      {/* ELF Header */}
-      <div className="text-center py-1.5 border-b border-gray-200 flex-shrink-0 bg-white/95 backdrop-blur-sm shadow-sm relative z-10">
-        <img 
-          src="/ELF-removebg-preview.png" 
-          alt="ELF" 
-          className="h-8 sm:h-10 md:h-12 mx-auto object-contain drop-shadow-sm"
-        />
-      </div>
-      
       {/* Top Navigation */}
       <nav className="flex items-center justify-between px-4 sm:px-6 pt-2 sm:pt-3 pb-1.5 sm:pb-2 flex-shrink-0 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm relative z-10">
-        <div className="flex-1"></div>
+        <div className="flex-1 flex items-center">
+          <img 
+            src="/ELF-removebg-preview.png" 
+            alt="ELF" 
+            className="h-6 sm:h-7 md:h-8 object-contain drop-shadow-sm"
+          />
+        </div>
         <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1 justify-center">
           <button className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 transition-all duration-200 hover:text-red-600 cursor-pointer">PLAY</button>
           <button className="text-lg sm:text-xl md:text-2xl font-medium text-gray-400 transition-all duration-200 hover:text-gray-600 cursor-pointer">INBOX</button>
@@ -194,7 +191,7 @@ function Home() {
               </div>
 
               {/* White Bottom Section */}
-              <div ref={textContainerRef} className="flex-[1.5] flex items-center justify-center bg-white py-6 sm:py-8 md:py-10 lg:py-12 xl:py-14 px-3 sm:px-4">
+              <div ref={textContainerRef} className="flex-[0.75] flex items-center justify-center bg-white py-3 sm:py-4 md:py-5 lg:py-6 xl:py-7 px-3 sm:px-4">
                 {isEditingText ? (
                   <input
                     ref={textInputRef}
@@ -267,11 +264,11 @@ function Home() {
             Step 2: Share link on your Story
           </h3>
           <div className="flex justify-center">
-            <button className="w-3/4 sm:w-2/3 md:w-1/2 py-4 sm:py-4.5 md:py-5 lg:py-6 px-3 sm:px-4 rounded-3xl text-white font-semibold shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transform" style={{ background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #ef4444 100%)' }}>
-              <div className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border-2 border-white/90 flex items-center justify-center backdrop-blur-sm shadow-inner">
+            <button className="w-1/2 sm:w-2/5 md:w-1/3 py-2.5 sm:py-3 md:py-3.5 lg:py-4 px-3 sm:px-4 rounded-3xl text-white font-semibold shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transform" style={{ background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #ef4444 100%)' }}>
+              <div className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full border-2 border-white/90 flex items-center justify-center backdrop-blur-sm shadow-inner">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4"
+                  className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-3.5 md:w-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -284,7 +281,7 @@ function Home() {
                   />
                 </svg>
               </div>
-              <span className="drop-shadow-sm text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl">Share!</span>
+              <span className="drop-shadow-sm text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl">Share!</span>
             </button>
           </div>
         </div>
