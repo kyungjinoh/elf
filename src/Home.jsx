@@ -64,16 +64,16 @@ function Home() {
   }))
 
   return (
-    <div className={`h-screen ${isEditingText ? 'overflow-y-auto' : 'overflow-hidden'} flex flex-col relative`} style={{ background: 'linear-gradient(to bottom, #ffcccb, #ff6b6b)' }}>
+    <div className={`${isEditingText ? 'overflow-y-auto' : 'overflow-hidden'} flex flex-col relative`} style={{ background: 'linear-gradient(to bottom, #ffcccb, #ff6b6b)', height: '100dvh', minHeight: '100vh' }}>
       {/* Snow Effect */}
       <div className="absolute inset-0 pointer-events-none z-10">
         {snowflakes.map((snowflake) => (
           <div
             key={snowflake.id}
-            className="absolute text-white opacity-70 snowflake"
+            className="absolute text-white snowflake"
             style={{
               left: `${snowflake.left}%`,
-              top: '-10px',
+              top: '-100px',
               animationDelay: `${snowflake.delay}s`,
               animationDuration: `${snowflake.duration}s`,
               fontSize: `${snowflake.size}px`,
