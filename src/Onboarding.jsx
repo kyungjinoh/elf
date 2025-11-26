@@ -399,7 +399,12 @@ function Onboarding({ onGetStarted }) {
             ))}
           </div>
 
-          <div className="relative z-10 h-screen overflow-y-auto">
+          <div 
+            className="relative z-10 overflow-y-auto"
+            style={{
+              height: '100dvh',
+            }}
+          >
             {/* Fixed Header - Back Button, Skip Button, Logo */}
             <div 
               className="absolute inset-x-0 top-0 z-30 px-6 sm:px-8"
@@ -455,9 +460,10 @@ function Onboarding({ onGetStarted }) {
 
             {/* Sliding Content Container */}
             <div 
-              className="min-h-full flex flex-col px-6 sm:px-8"
+              className="flex flex-col px-6 sm:px-8"
               style={{
-                paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+                minHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
+                paddingBottom: 'calc(3rem + env(safe-area-inset-bottom, 0px))',
                 paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))',
               }}
             >
@@ -513,7 +519,7 @@ function Onboarding({ onGetStarted }) {
                 <div 
                   className="w-full max-w-sm mx-auto mt-auto"
                   style={{
-                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                    marginBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
                   }}
                 >
                   <button
@@ -618,7 +624,7 @@ function Onboarding({ onGetStarted }) {
                 <div 
                   className="w-full max-w-sm mx-auto mt-auto"
                   style={{
-                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                    marginBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
                   }}
                 >
                   <button
@@ -707,7 +713,7 @@ function Onboarding({ onGetStarted }) {
                 <div 
                   className="w-full max-w-sm mx-auto mt-auto"
                   style={{
-                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                    marginBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
                   }}
                 >
                   <button
@@ -784,7 +790,7 @@ function Onboarding({ onGetStarted }) {
                 <div 
                   className="w-full max-w-sm mx-auto mt-auto"
                   style={{
-                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                    marginBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
                   }}
                 >
                   <button
