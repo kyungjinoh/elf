@@ -401,11 +401,19 @@ function Onboarding({ onGetStarted }) {
 
           <div className="relative z-10 h-screen overflow-y-auto">
             {/* Fixed Header - Back Button, Skip Button, Logo */}
-            <div className="absolute inset-x-0 top-0 z-30 px-6 sm:px-8 pt-6 sm:pt-8">
+            <div 
+              className="absolute inset-x-0 top-0 z-30 px-6 sm:px-8"
+              style={{
+                paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))',
+              }}
+            >
               {/* Back Button */}
               <button
                 onClick={showWelcomeBackPage ? handleBackFromWelcomeBack : showEmailPasswordPage ? handleBackFromEmailPassword : showProfilePage ? handleBackFromProfile : handleBackFromUsername}
-                className="absolute top-6 sm:top-8 left-6 sm:left-8 z-20 text-white hover:text-white/80 transition-colors"
+                className="absolute left-6 sm:left-8 z-20 text-white hover:text-white/80 transition-colors"
+                style={{
+                  top: 'calc(1.5rem + env(safe-area-inset-top, 0px))',
+                }}
               >
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
@@ -423,7 +431,10 @@ function Onboarding({ onGetStarted }) {
               {showProfilePage && !showEmailPasswordPage && (
                 <button
                   onClick={handleSkipProfile}
-                  className="absolute top-6 sm:top-8 right-6 sm:right-8 z-20 text-white hover:text-white/80 transition-colors text-base sm:text-lg font-medium"
+                  className="absolute right-6 sm:right-8 z-20 text-white hover:text-white/80 transition-colors text-base sm:text-lg font-medium"
+                  style={{
+                    top: 'calc(1.5rem + env(safe-area-inset-top, 0px))',
+                  }}
                 >
                   skip
                 </button>
@@ -443,7 +454,13 @@ function Onboarding({ onGetStarted }) {
             </div>
 
             {/* Sliding Content Container */}
-            <div className="min-h-full flex flex-col px-6 sm:px-8 pt-6 sm:pt-8 pb-8 sm:pb-12">
+            <div 
+              className="min-h-full flex flex-col px-6 sm:px-8"
+              style={{
+                paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+                paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))',
+              }}
+            >
               {/* Spacer for fixed logo */}
               <div className="h-32 sm:h-40"></div>
 
@@ -493,7 +510,12 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Continue Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
+                <div 
+                  className="w-full max-w-sm mx-auto mt-auto"
+                  style={{
+                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                  }}
+                >
                   <button
                     onClick={handleContinue}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
@@ -593,7 +615,12 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Next Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
+                <div 
+                  className="w-full max-w-sm mx-auto mt-auto"
+                  style={{
+                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                  }}
+                >
                   <button
                     onClick={handleSkipProfile}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
@@ -677,7 +704,12 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Next/Complete Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
+                <div 
+                  className="w-full max-w-sm mx-auto mt-auto"
+                  style={{
+                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                  }}
+                >
                   <button
                     onClick={handleCompleteSignup}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
@@ -749,7 +781,12 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Login Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
+                <div 
+                  className="w-full max-w-sm mx-auto mt-auto"
+                  style={{
+                    marginBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                  }}
+                >
                   <button
                     onClick={handleLoginComplete}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"

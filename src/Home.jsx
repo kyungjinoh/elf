@@ -308,7 +308,17 @@ function Home({ username: propUsername = '' }) {
 
               {/* Main Text */}
               <h2 className="relative z-10 text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-8 sm:mb-10 md:mb-12 drop-shadow-lg px-4">
-                {cardText}
+                {cardText.toLowerCase().startsWith('send me') ? (
+                  <>
+                    Send me<br />
+                    {cardText.substring(8).trim() || 'X-mas letter!'}
+                  </>
+                ) : (
+                  <>
+                    Send me<br />
+                    {cardText || 'X-mas letter!'}
+                  </>
+                )}
               </h2>
 
               {/* Link Button */}
