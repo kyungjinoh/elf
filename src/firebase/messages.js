@@ -1,5 +1,6 @@
 import { collection, addDoc, query, where, getDocs, updateDoc, doc, orderBy, limit } from 'firebase/firestore'
 import { db } from './config'
+import { getUserIP } from './utils'
 
 /**
  * Send a message to a user's inbox
@@ -13,6 +14,9 @@ export const sendMessage = async (recipientUsername, messageText) => {
     if (!recipientUsername) {
       return { success: false, error: 'Recipient username is required' }
     }
+
+    // Get user's IP address
+    const userIP = await getUserIP()
 
     // Find recipient user by username
     const usernameLower = recipientUsername.toLowerCase().trim()
@@ -35,6 +39,7 @@ export const sendMessage = async (recipientUsername, messageText) => {
       message: messageText.trim(),
       read: false,
       createdAt: new Date().toISOString(),
+      ipAddress: userIP || null, // Store IP address
     }
 
     const docRef = await addDoc(messagesRef, messageData)

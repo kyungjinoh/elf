@@ -1,5 +1,6 @@
 import { collection, addDoc, query, where, getDocs, doc } from 'firebase/firestore'
 import { db } from './config'
+import { getUserIP } from './utils'
 
 /**
  * Get or create a unique visitor ID (stored in localStorage)
@@ -72,6 +73,9 @@ export const trackView = async (username) => {
           }
         }
 
+        // Get user's IP address
+        const userIP = await getUserIP()
+
         // Create new view document only for first-time visitors
         const now = new Date()
         const timestamp = now.getTime()
@@ -80,7 +84,8 @@ export const trackView = async (username) => {
           username: username,
           visitorId: visitorId,
           createdAt: now.toISOString(),
-          timestamp: timestamp
+          timestamp: timestamp,
+          ipAddress: userIP || null // Store IP address
         }
 
         const docRef = await addDoc(viewsRef, viewData)
