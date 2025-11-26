@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 
-function Home() {
+function Home({ username: propUsername = '' }) {
   const [linkCopied, setLinkCopied] = useState(false)
+  const [showSharePopup, setShowSharePopup] = useState(false)
   const [profileImageUrl, setProfileImageUrl] = useState('/letter.png')
   const [cardText, setCardText] = useState('Send me X-mas letter!')
   const [isEditingText, setIsEditingText] = useState(false)
@@ -14,10 +15,36 @@ function Home() {
   const textContainerRef = useRef(null)
   const navBarRef = useRef(null)
 
+  // Get domain address from current location (includes port number)
+  const websiteAddress = typeof window !== 'undefined' ? window.location.host : ''
+  const username = propUsername || 'USER'
+
+  // Generate dynamic link
+  const userLink = `${websiteAddress}/letter/${username}`
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText('NGL.LINK/KINGEBERE_/TBH')
+    navigator.clipboard.writeText(userLink)
     setLinkCopied(true)
     setTimeout(() => setLinkCopied(false), 1000)
+    // Show share popup after a short delay
+    setTimeout(() => {
+      setShowSharePopup(true)
+    }, 500)
+  }
+
+  const handleCloseSharePopup = () => {
+    setShowSharePopup(false)
+  }
+
+  const handleShare = () => {
+    // Copy link to clipboard
+    navigator.clipboard.writeText(userLink)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 1000)
+    // Show share popup after a short delay
+    setTimeout(() => {
+      setShowSharePopup(true)
+    }, 500)
   }
 
   const handleViewersClick = () => {
@@ -219,6 +246,123 @@ function Home() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Share Popup - Instagram Story Style - Full Screen */}
+      {showSharePopup && (
+        <div 
+          className="fixed inset-0 z-[70] overflow-hidden"
+          style={{
+            animation: 'slideUpFromBottomFull 0.4s ease-out',
+            opacity: 1,
+            backgroundImage: 'url(/background.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+
+          {/* Close Button */}
+          <div className="absolute top-4 right-4 z-10">
+            <button
+              onClick={handleCloseSharePopup}
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Content Container - Full Screen */}
+          <div 
+            className="relative w-full h-full flex flex-col items-center justify-between px-6 sm:px-8 py-12 sm:py-16"
+            style={{
+              minHeight: '100dvh',
+              paddingTop: 'env(safe-area-inset-top, 0)',
+              paddingBottom: 'env(safe-area-inset-bottom, 0)',
+            }}
+          >
+            {/* Top Section - Centered */}
+            <div className="flex-1 flex flex-col items-center justify-center w-full">
+              {/* Profile Image Circle */}
+              <div className="relative z-10 mb-6 sm:mb-8">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-white shadow-2xl">
+                  <img
+                    src={profileImageUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3EUser%3C/text%3E%3C/svg%3E'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Main Text */}
+              <h2 className="relative z-10 text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-8 sm:mb-10 md:mb-12 drop-shadow-lg px-4">
+                {cardText}
+              </h2>
+
+              {/* Link Button */}
+              <div className="relative z-10 w-full max-w-[160px] sm:max-w-[180px] md:max-w-[200px] mb-6 sm:mb-8 md:mb-10">
+                <div className="w-full rounded-xl sm:rounded-2xl py-2.5 sm:py-3 md:py-3.5 px-3 sm:px-4 md:px-5 flex items-center justify-center gap-1.5 sm:gap-2 border-2 border-dashed border-white">
+                  <span className="text-white font-bold text-sm sm:text-base md:text-lg flex items-center gap-1.5">
+                    <span>Paste</span>
+                    <img src="/link.png" alt="Link" className="h-6 w-auto sm:h-7 md:h-8 object-contain" />
+                    <span>here</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Upward Arrows */}
+              <div className="relative z-10 flex gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8 md:mb-10">
+                {[1, 2, 3].map((i) => (
+                  <svg
+                    key={i}
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 text-white drop-shadow-lg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                  </svg>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Section - Fixed at Bottom */}
+            <div className="relative z-10 w-full flex flex-col items-center gap-2 sm:gap-3 -mt-8 sm:-mt-10 md:-mt-12">
+              {/* ELF Logo and anonymous x-mas letter */}
+              <div className="text-center">
+                <img 
+                  src="/ELF-removebg-preview.png" 
+                  alt="ELF" 
+                  className="h-8 sm:h-10 md:h-12 object-contain mx-auto mb-2 drop-shadow-md"
+                />
+                <p className="text-white/90 text-sm sm:text-base md:text-lg drop-shadow-md">
+                  anonymous x-mas letter
+                </p>
+              </div>
+
+              {/* Screenshot instruction with dark background */}
+              <div className="w-screen bg-black py-3 sm:py-4 md:py-5 -mx-6 sm:-mx-8">
+                <p className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-semibold drop-shadow-md text-center">
+                  Screenshot and post in your story
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Recent Views Screen */}
@@ -487,7 +631,7 @@ function Home() {
             Step 1: Copy your link
           </h3>
           <div className="text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 md:mb-5 lg:mb-6 font-sans font-medium tracking-wide text-center break-all px-2 rounded-lg py-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
-            NGL.LINK/KINGEBERE_/TBH
+            {userLink}
           </div>
           <div className="flex justify-center">
             <div 
@@ -522,7 +666,11 @@ function Home() {
             Step 2: Share link on your Story
           </h3>
           <div className="flex justify-center">
-            <button className="w-1/2 sm:w-2/5 md:w-1/3 py-2.5 sm:py-3 md:py-3.5 lg:py-4 px-3 sm:px-4 rounded-3xl text-white font-semibold shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transform" style={{ background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #ef4444 100%)' }}>
+            <button 
+              onClick={handleShare}
+              className="w-1/2 sm:w-2/5 md:w-1/3 py-2.5 sm:py-3 md:py-3.5 lg:py-4 px-3 sm:px-4 rounded-3xl text-white font-semibold shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transform" 
+              style={{ background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #ef4444 100%)' }}
+            >
               <div className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full border-2 border-white/90 flex items-center justify-center backdrop-blur-sm shadow-inner">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -549,4 +697,5 @@ function Home() {
 }
 
 export default Home
+
 
