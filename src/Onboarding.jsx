@@ -33,6 +33,7 @@ function Onboarding({ onGetStarted }) {
   const [error, setError] = useState('')
   const [usernameError, setUsernameError] = useState('')
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
+  const [isUsernameValidated, setIsUsernameValidated] = useState(false)
 
   // Prevent body scrolling when onboarding is active
   useEffect(() => {
@@ -98,6 +99,20 @@ function Onboarding({ onGetStarted }) {
       return
     }
 
+    // If username is already validated, proceed immediately
+    if (isUsernameValidated && !usernameError) {
+      setIsClosingUsernamePage(true)
+      setIsReturningFromProfile(false)
+      setTimeout(() => {
+        setShowUsernamePage(false)
+        setIsClosingUsernamePage(false)
+        setShowProfilePage(true)
+        setIsClosingProfilePage(false)
+      }, 300)
+      return
+    }
+
+    // Otherwise, validate first
     setIsLoading(true)
     setUsernameError('')
     
@@ -107,10 +122,12 @@ function Onboarding({ onGetStarted }) {
     
     if (!result.available) {
       setUsernameError(result.error || 'Username is not available')
+      setIsUsernameValidated(false)
       return
     }
 
-    // Username is valid, proceed to profile page
+    // Username is valid, mark as validated and proceed to profile page
+    setIsUsernameValidated(true)
     setIsClosingUsernamePage(true)
     setIsReturningFromProfile(false)
     setTimeout(() => {
@@ -277,6 +294,7 @@ function Onboarding({ onGetStarted }) {
   const handleUsernameBlur = async () => {
     if (!username.trim()) {
       setUsernameError('')
+      setIsUsernameValidated(false)
       return
     }
 
@@ -289,6 +307,9 @@ function Onboarding({ onGetStarted }) {
     
     if (!result.available) {
       setUsernameError(result.error || 'Username is not available')
+      setIsUsernameValidated(false)
+    } else {
+      setIsUsernameValidated(true)
     }
   }
 
@@ -638,6 +659,7 @@ function Onboarding({ onGetStarted }) {
                         onChange={(e) => {
                           setUsername(e.target.value)
                           setUsernameError('') // Clear error when user types
+                          setIsUsernameValidated(false) // Clear validation when user types
                         }}
                         onBlur={handleUsernameBlur}
                         placeholder=""

@@ -11,7 +11,7 @@ function Home({ username: propUsername = '' }) {
   const [linkCopied, setLinkCopied] = useState(false)
   const [showSharePopup, setShowSharePopup] = useState(false)
   const [profileImageUrl, setProfileImageUrl] = useState('/letter.png')
-  const [cardText, setCardText] = useState('Send me X-mas letter!')
+  const [cardText, setCardText] = useState('Send me anonymous X-mas letter')
   const [isEditingText, setIsEditingText] = useState(false)
   const [showViewers, setShowViewers] = useState(false)
   const [isClosingViewers, setIsClosingViewers] = useState(false)
@@ -106,7 +106,7 @@ function Home({ username: propUsername = '' }) {
             localStorage.setItem('cardText', result.user.cardText)
           } else {
             // If no cardText exists, save the default one
-            const defaultCardText = 'Send me X-mas letter!'
+            const defaultCardText = 'Send me anonymous X-mas letter'
             setCardText(defaultCardText)
             localStorage.setItem('cardText', defaultCardText)
             // Save to Firestore
@@ -330,12 +330,12 @@ function Home({ username: propUsername = '' }) {
       const result = await getCurrentUser()
       if (result.success && result.user.uid) {
         await updateDoc(doc(db, 'users', result.user.uid), {
-          cardText: cardText || 'Send me X-mas letter!',
+          cardText: cardText || 'Send me anonymous X-mas letter',
           updatedAt: new Date().toISOString()
         })
         
         // Cache the cardText
-        localStorage.setItem('cardText', cardText || 'Send me X-mas letter!')
+        localStorage.setItem('cardText', cardText || 'Send me anonymous X-mas letter')
       }
     } catch (error) {
       console.error('Error saving cardText:', error)
@@ -986,7 +986,7 @@ function Home({ username: propUsername = '' }) {
                     onClick={handleTextFocus}
                     className="text-center text-gray-800 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-relaxed tracking-tight cursor-text hover:bg-gray-50 rounded px-2 py-1 transition-colors break-words"
                   >
-                    {cardText || 'Send me X-mas letter!'}
+                    {cardText || 'Send me anonymous X-mas letter'}
                   </p>
                 )}
               </div>
