@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getCurrentUser, uploadProfilePicture } from './firebase/auth'
+import { doc, updateDoc } from 'firebase/firestore'
+import { db } from './firebase/config'
+import { getMessages, markMessageAsRead, getUnreadCount } from './firebase/messages'
 
 function Home({ username: propUsername = '' }) {
+  const navigate = useNavigate()
   const [linkCopied, setLinkCopied] = useState(false)
   const [showSharePopup, setShowSharePopup] = useState(false)
   const [profileImageUrl, setProfileImageUrl] = useState('/letter.png')
@@ -11,14 +17,126 @@ function Home({ username: propUsername = '' }) {
   const [showInbox, setShowInbox] = useState(false)
   const [isClosingInbox, setIsClosingInbox] = useState(false)
   const [navBarHeight, setNavBarHeight] = useState(0)
+  const [messages, setMessages] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showLetterPopup, setShowLetterPopup] = useState(false)
   const textInputRef = useRef(null)
   const textContainerRef = useRef(null)
   const navBarRef = useRef(null)
-  const videoRef = useRef(null)
 
   // Get domain address from current location (includes port number)
   const websiteAddress = typeof window !== 'undefined' ? window.location.host : ''
   const username = propUsername || 'USER'
+
+  // Function to load messages
+  const loadMessages = async () => {
+    try {
+      const result = await getCurrentUser()
+      if (result.success && result.user.uid) {
+        const messagesResult = await getMessages(result.user.uid)
+        console.log('Messages result:', messagesResult) // Debug log
+        if (messagesResult.success) {
+          setMessages(messagesResult.messages || [])
+        } else {
+          console.error('Failed to get messages:', messagesResult.error)
+        }
+        
+        // Get unread count
+        const countResult = await getUnreadCount(result.user.uid)
+        if (countResult.success) {
+          setUnreadCount(countResult.count)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error)
+    }
+  }
+
+  // Load cached profile picture and cardText immediately, then fetch from Firebase
+  useEffect(() => {
+    // Check localStorage for cached profile picture
+    const cachedProfilePicture = localStorage.getItem('profilePictureUrl')
+    if (cachedProfilePicture) {
+      setProfileImageUrl(cachedProfilePicture)
+    }
+
+    // Check localStorage for cached cardText
+    const cachedCardText = localStorage.getItem('cardText')
+    if (cachedCardText) {
+      setCardText(cachedCardText)
+    }
+
+    // Load user profile picture and cardText from Firebase on mount
+    const loadUserProfile = async () => {
+      try {
+        const result = await getCurrentUser()
+        if (result.success) {
+          // Update profile picture
+          if (result.user.profilePictureUrl) {
+            setProfileImageUrl(result.user.profilePictureUrl)
+            localStorage.setItem('profilePictureUrl', result.user.profilePictureUrl)
+          } else {
+            localStorage.removeItem('profilePictureUrl')
+          }
+
+          // Update cardText
+          if (result.user.cardText) {
+            setCardText(result.user.cardText)
+            localStorage.setItem('cardText', result.user.cardText)
+          } else {
+            // If no cardText exists, save the default one
+            const defaultCardText = 'Send me X-mas letter!'
+            setCardText(defaultCardText)
+            localStorage.setItem('cardText', defaultCardText)
+            // Save to Firestore
+            try {
+              await updateDoc(doc(db, 'users', result.user.uid), {
+                cardText: defaultCardText,
+                updatedAt: new Date().toISOString()
+              })
+            } catch (error) {
+              console.error('Error saving default cardText:', error)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error)
+        // Keep cached or default values if there's an error
+      }
+    }
+
+    loadUserProfile()
+
+    // Load unread count on mount
+    const loadUnreadCount = async () => {
+      try {
+        const result = await getCurrentUser()
+        if (result.success && result.user.uid) {
+          const countResult = await getUnreadCount(result.user.uid)
+          if (countResult.success) {
+            setUnreadCount(countResult.count)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading unread count:', error)
+      }
+    }
+
+    loadUnreadCount()
+  }, [])
+
+  // Refresh messages when inbox is open
+  useEffect(() => {
+    if (showInbox) {
+      loadMessages()
+      // Set up interval to refresh messages every 5 seconds when inbox is open
+      const refreshInterval = setInterval(() => {
+        loadMessages()
+      }, 5000)
+
+      return () => clearInterval(refreshInterval)
+    }
+  }, [showInbox])
 
   // Generate dynamic link
   const userLink = `${websiteAddress}/letter/${username}`
@@ -35,50 +153,7 @@ function Home({ username: propUsername = '' }) {
 
   const handleCloseSharePopup = () => {
     setShowSharePopup(false)
-    // Exit picture-in-picture if active
-    if (videoRef.current && document.pictureInPictureElement) {
-      document.exitPictureInPicture().catch(() => {})
-    }
   }
-
-  // Detect iOS
-  const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
-
-  // Enter picture-in-picture when share popup opens
-  useEffect(() => {
-    if (showSharePopup && videoRef.current) {
-      const video = videoRef.current
-      
-      // Play video and enter PiP (or just play on iOS)
-      const enterPiP = async () => {
-        try {
-          // On iOS, just play the video (PiP API not supported programmatically)
-          if (isIOS) {
-            await video.play()
-            return
-          }
-          
-          // Check if PiP is supported on other platforms
-          if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
-            await video.play()
-            await video.requestPictureInPicture()
-          } else {
-            // Fallback: just play the video if PiP not supported
-            await video.play()
-          }
-        } catch (error) {
-          console.log('Video playback not available:', error)
-        }
-      }
-
-      // Small delay to ensure video is ready
-      const timer = setTimeout(() => {
-        enterPiP()
-      }, 300)
-
-      return () => clearTimeout(timer)
-    }
-  }, [showSharePopup, isIOS])
 
   const handleShare = () => {
     // Copy link to clipboard
@@ -104,9 +179,38 @@ function Home({ username: propUsername = '' }) {
     }, 150) // Fast animation duration
   }
 
-  const handleInboxClick = () => {
+  const handleInboxClick = async () => {
     setIsClosingInbox(false)
     setShowInbox(true)
+    
+    // Fetch messages when inbox opens
+    await loadMessages()
+  }
+
+  const handleMessageClick = async (message) => {
+    // Show popup
+    setShowLetterPopup(true)
+    
+    // Mark message as read if it's unread
+    if (!message.read) {
+      try {
+        await markMessageAsRead(message.id)
+        // Update local state
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === message.id ? { ...msg, read: true } : msg
+          )
+        )
+        // Update unread count
+        setUnreadCount(prev => Math.max(0, prev - 1))
+      } catch (error) {
+        console.error('Error marking message as read:', error)
+      }
+    }
+  }
+
+  const handleCloseLetterPopup = () => {
+    setShowLetterPopup(false)
   }
 
   const handleCloseInbox = () => {
@@ -117,14 +221,44 @@ function Home({ username: propUsername = '' }) {
     }, 300) // Faster animation duration
   }
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Show preview immediately
       const reader = new FileReader()
       reader.onloadend = () => {
         setProfileImageUrl(reader.result)
       }
       reader.readAsDataURL(file)
+
+      // Upload to Firebase Storage
+      try {
+        const userResult = await getCurrentUser()
+        
+        if (userResult.success && userResult.user.uid) {
+          const uploadResult = await uploadProfilePicture(file, userResult.user.uid)
+          
+          if (uploadResult.success) {
+            // Update profile picture URL in Firestore
+            await updateDoc(doc(db, 'users', userResult.user.uid), {
+              profilePictureUrl: uploadResult.url,
+              updatedAt: new Date().toISOString()
+            })
+            
+            // Update local state and cache with the uploaded URL
+            setProfileImageUrl(uploadResult.url)
+            localStorage.setItem('profilePictureUrl', uploadResult.url)
+          } else {
+            console.error('Failed to upload profile picture:', uploadResult.error)
+            // Keep the preview but show an error
+            alert('Failed to upload profile picture. Please try again.')
+          }
+        }
+      } catch (error) {
+        console.error('Error uploading profile picture:', error)
+        // Keep the preview but show an error
+        alert('Failed to upload profile picture. Please try again.')
+      }
     }
   }
 
@@ -132,8 +266,24 @@ function Home({ username: propUsername = '' }) {
     setCardText(e.target.textContent || e.target.value)
   }
 
-  const handleTextBlur = () => {
+  const handleTextBlur = async () => {
     setIsEditingText(false)
+    
+    // Save cardText to Firestore
+    try {
+      const result = await getCurrentUser()
+      if (result.success && result.user.uid) {
+        await updateDoc(doc(db, 'users', result.user.uid), {
+          cardText: cardText || 'Send me X-mas letter!',
+          updatedAt: new Date().toISOString()
+        })
+        
+        // Cache the cardText
+        localStorage.setItem('cardText', cardText || 'Send me X-mas letter!')
+      }
+    } catch (error) {
+      console.error('Error saving cardText:', error)
+    }
   }
 
   const handleTextFocus = () => {
@@ -209,11 +359,16 @@ function Home({ username: propUsername = '' }) {
       {/* Top Navigation */}
       <nav ref={navBarRef} className="flex items-center justify-between px-4 sm:px-6 pt-2 sm:pt-3 pb-1.5 sm:pb-2 flex-shrink-0 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm relative z-10">
         <div className="flex-1 flex items-center">
-          <img 
-            src="/ELF-removebg-preview.png" 
-            alt="ELF" 
-            className="h-6 sm:h-7 md:h-8 object-contain drop-shadow-sm"
-          />
+          <button
+            onClick={() => navigate('/')}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src="/ELF-removebg-preview.png" 
+              alt="ELF" 
+              className="h-6 sm:h-7 md:h-8 object-contain drop-shadow-sm"
+            />
+          </button>
         </div>
         <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1 justify-center">
           <button 
@@ -292,6 +447,99 @@ function Home({ username: propUsername = '' }) {
         </>
       )}
 
+      {/* Letter Popup - Shows when message is clicked */}
+      {showLetterPopup && (
+        <div 
+          className="fixed inset-0 z-[80] flex items-center justify-center px-4"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(6px)',
+          }}
+          onClick={handleCloseLetterPopup}
+        >
+          {/* Close Button - Outside the card */}
+          <button
+            onClick={handleCloseLetterPopup}
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors z-10 backdrop-blur-sm border-2 border-white/30"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 sm:h-7 sm:w-7 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={3}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div 
+            className="rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 max-w-sm w-full shadow-2xl relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 25%, #991b1b 50%, #dc2626 75%, #ef4444 100%)',
+              backgroundSize: '200% 200%',
+              animation: 'shimmer 3s ease-in-out infinite',
+              boxShadow: '0 0 30px rgba(220, 38, 38, 0.6), 0 0 60px rgba(220, 38, 38, 0.4), inset 0 0 30px rgba(255, 255, 255, 0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sparkle Effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 bg-white rounded-full"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animation: `sparkle ${2 + Math.random() * 2}s ease-in-out infinite`,
+                    animationDelay: `${Math.random() * 2}s`,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Main Message - Shows cardText */}
+            <div className="text-center mb-6 sm:mb-8 relative z-10">
+              <p 
+                className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-relaxed tracking-tight break-words drop-shadow-lg"
+                style={{
+                  textShadow: '0 0 10px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                {cardText}
+              </p>
+            </div>
+
+            {/* Input Field Style Box - Exciting reveal message */}
+            <div 
+              className="rounded-xl sm:rounded-2xl p-4 sm:p-5 relative z-10"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2), inset 0 0 15px rgba(220, 38, 38, 0.1)',
+                border: '2px solid rgba(220, 38, 38, 0.3)',
+                animation: 'pulseGlow 2s ease-in-out infinite',
+              }}
+            >
+              <p 
+                className="text-gray-900 text-base sm:text-lg md:text-xl font-bold text-center"
+                style={{
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                }}
+              >
+                Letter will be delivered to you on the X-Mas day
+              </p>
+              <div className="flex justify-center mt-2 gap-1">
+                <span className="text-2xl animate-pulse">🎄</span>
+                <span className="text-2xl animate-pulse" style={{ animationDelay: '0.2s' }}>✨</span>
+                <span className="text-2xl animate-pulse" style={{ animationDelay: '0.4s' }}>🎁</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Share Popup - Instagram Story Style - Full Screen */}
       {showSharePopup && (
         <div 
@@ -305,20 +553,6 @@ function Home({ username: propUsername = '' }) {
             backgroundRepeat: 'no-repeat',
           }}
         >
-          {/* Video for Picture-in-Picture (visible on iOS, hidden on other platforms) */}
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            controls={isIOS}
-            className={isIOS ? "fixed bottom-4 right-4 w-48 h-auto rounded-lg shadow-2xl z-50" : "hidden"}
-            style={isIOS ? {} : { display: 'none' }}
-          >
-            <source src="/video.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
 
           {/* Close Button */}
           <div className="absolute top-4 right-4 z-10">
@@ -543,48 +777,69 @@ function Home({ username: propUsername = '' }) {
           
           {/* Message Grid */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-16 sm:pb-20">
-            <div className="grid grid-cols-3 gap-3 sm:gap-4">
-              {/* Active/Unread Messages (Top 6) */}
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={`active-${index}`}
-                  className="aspect-square rounded-xl flex items-center justify-center shadow-md"
-                  style={{
-                    background: 'linear-gradient(to bottom, #ec4899, #f97316)',
-                  }}
-                >
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <img
-                      src="/loveletter.png"
-                      alt="Love Letter"
-                      className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 object-contain"
-                      onError={(e) => {
-                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3ELetter%3C/text%3E%3C/svg%3E'
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                {/* Empty Inbox Message */}
+                <div className="text-center mb-8 sm:mb-12">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                    Your inbox is empty 🥺
+                  </h2>
+                  <p className="text-sm sm:text-base text-gray-600 mt-3">
+                    Share your link to get questions in your inbox!
+                  </p>
+                </div>
+                
+                {/* Placeholder Grid */}
+                <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-md">
+                  {Array.from({ length: 15 }).map((_, index) => (
+                    <div
+                      key={`placeholder-${index}`}
+                      className="aspect-square rounded-xl bg-gray-200 shadow-sm"
+                      style={{
+                        background: 'linear-gradient(to bottom, rgba(229, 231, 235, 0.8), rgba(209, 213, 219, 0.8))',
                       }}
                     />
-                  </div>
+                  ))}
                 </div>
-              ))}
-
-              {/* Inactive/Read Messages (Bottom 9) */}
-              {Array.from({ length: 9 }).map((_, index) => (
-                <div
-                  key={`inactive-${index}`}
-                  className="aspect-square rounded-xl bg-gray-200 flex items-center justify-center shadow-sm"
-                >
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <img
-                      src="/loveletter.png"
-                      alt="Love Letter"
-                      className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 object-contain opacity-70"
-                      onError={(e) => {
-                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3ELetter%3C/text%3E%3C/svg%3E'
-                      }}
-                    />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={message.id}
+                    onClick={() => handleMessageClick(message)}
+                    className={`aspect-square rounded-xl flex items-center justify-center shadow-md cursor-pointer transition-all duration-200 hover:scale-105 ${
+                      !message.read 
+                        ? '' 
+                        : 'bg-gray-200'
+                    }`}
+                    style={
+                      !message.read
+                        ? {
+                            background: 'linear-gradient(to bottom, #ec4899, #f97316)',
+                          }
+                        : {}
+                    }
+                  >
+                    <div className="relative w-full h-full flex items-center justify-center p-2">
+                      <img
+                        src="/loveletter.png"
+                        alt="Love Letter"
+                        className={`h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 object-contain ${
+                          message.read ? 'opacity-70' : ''
+                        }`}
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3ELetter%3C/text%3E%3C/svg%3E'
+                        }}
+                      />
+                      {!message.read && (
+                        <div className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

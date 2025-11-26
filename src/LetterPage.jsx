@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from './firebase/config'
+import { sendMessage } from './firebase/messages'
 
 function LetterPage() {
   const { username } = useParams()
@@ -7,10 +10,34 @@ function LetterPage() {
   const [message, setMessage] = useState('')
   const [showMessageSent, setShowMessageSent] = useState(false)
   const [countdown, setCountdown] = useState(5)
+  const [profilePictureUrl, setProfilePictureUrl] = useState('/letter.png')
+  const [userMessage, setUserMessage] = useState('send me anonymous X-mas letter!')
+  const [isSending, setIsSending] = useState(false)
   
-  const handleSend = () => {
-    setShowMessageSent(true)
-    setCountdown(5) // Reset countdown when message is sent
+  const handleSend = async () => {
+    if (!message.trim()) {
+      return
+    }
+
+    setIsSending(true)
+    
+    try {
+      // Send message to recipient's inbox
+      const result = await sendMessage(username, message)
+      
+      if (result.success) {
+        setShowMessageSent(true)
+        setCountdown(5) // Reset countdown when message is sent
+        setMessage('') // Clear the message
+      } else {
+        alert(result.error || 'Failed to send message')
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      alert('Failed to send message. Please try again.')
+    } finally {
+      setIsSending(false)
+    }
   }
   
   // Countdown timer
@@ -76,6 +103,41 @@ function LetterPage() {
     
     return () => clearInterval(interval)
   }, [])
+
+  // Fetch user data (profile picture and message) based on username
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!username) return
+
+      try {
+        const usernameLower = username.toLowerCase().trim()
+        const usersRef = collection(db, 'users')
+        const q = query(usersRef, where('usernameLower', '==', usernameLower))
+        const querySnapshot = await getDocs(q)
+
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0].data()
+          
+          // Set profile picture
+          if (userDoc.profilePictureUrl) {
+            setProfilePictureUrl(userDoc.profilePictureUrl)
+          }
+
+          // Set user message (cardText) - check if it exists in Firestore
+          // For now, we'll need to add cardText to the user document
+          // If it doesn't exist, use the default message
+          if (userDoc.cardText) {
+            setUserMessage(userDoc.cardText)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        // Keep default values if there's an error
+      }
+    }
+
+    fetchUserData()
+  }, [username])
 
   // Generate snow circles - memoized so they don't regenerate on re-render
   const snowCircles = useMemo(() => 
@@ -206,11 +268,11 @@ function LetterPage() {
           {/* Profile Picture */}
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0 bg-pink-100 flex items-center justify-center">
             <img 
-              src="/letter.png" 
+              src={profilePictureUrl}
               alt="Profile" 
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24"%3E%3Cpath fill="white" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/%3E%3Ccircle cx="18" cy="8" r="3" fill="red"/%3E%3C/svg%3E'
+                e.target.src = '/letter.png'
               }}
             />
           </div>
@@ -221,7 +283,7 @@ function LetterPage() {
               @{username ? username.toUpperCase() : 'USER'}
             </div>
             <div className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mt-0.5">
-              send me anonymous X-mas letter!
+              {userMessage}
             </div>
           </div>
         </div>
@@ -272,10 +334,11 @@ function LetterPage() {
           <div className="mb-6 sm:mb-8 w-full px-4 text-center">
             <button 
               onClick={handleSend}
-              className="py-4 sm:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+              disabled={isSending}
+              className="py-4 sm:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ width: '75%', maxWidth: '750px', margin: '0 auto' }}
             >
-              Send!
+              {isSending ? 'Sending...' : 'Send!'}
             </button>
           </div>
         )}

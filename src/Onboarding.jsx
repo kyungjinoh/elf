@@ -1,4 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
+import { 
+  checkUsernameAvailability, 
+  uploadProfilePicture, 
+  signUp, 
+  signIn 
+} from './firebase/auth'
 
 function Onboarding({ onGetStarted }) {
   const [showHowItWorks, setShowHowItWorks] = useState(false)
@@ -17,9 +23,16 @@ function Onboarding({ onGetStarted }) {
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [profilePicture, setProfilePicture] = useState(null)
+  const [profilePictureFile, setProfilePictureFile] = useState(null) // Store actual file for upload
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isReturningFromProfile, setIsReturningFromProfile] = useState(false)
   const [isReturningFromEmailPassword, setIsReturningFromEmailPassword] = useState(false)
+  
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false)
 
   // Prevent body scrolling when onboarding is active
   useEffect(() => {
@@ -32,11 +45,11 @@ function Onboarding({ onGetStarted }) {
   // Generate snow circles - memoized so they don't regenerate on re-render
   const snowCircles = useMemo(() => 
     Array.from({ length: 60 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
+    id: i,
+    left: Math.random() * 100,
       delay: Math.random() * 20, // Increased delay range for more varied timing
       duration: 8 + Math.random() * 12, // More varied duration
-      size: (Math.random() * 3 + 1) * 2,
+    size: (Math.random() * 3 + 1) * 2,
     })), []
   )
 
@@ -78,7 +91,26 @@ function Onboarding({ onGetStarted }) {
     }, 300)
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    // Validate username before continuing
+    if (!username.trim()) {
+      setUsernameError('Please enter a username')
+      return
+    }
+
+    setIsLoading(true)
+    setUsernameError('')
+    
+    const result = await checkUsernameAvailability(username)
+    
+    setIsLoading(false)
+    
+    if (!result.available) {
+      setUsernameError(result.error || 'Username is not available')
+      return
+    }
+
+    // Username is valid, proceed to profile page
     setIsClosingUsernamePage(true)
     setIsReturningFromProfile(false)
     setTimeout(() => {
@@ -90,6 +122,8 @@ function Onboarding({ onGetStarted }) {
   }
 
   const handleSkipProfile = () => {
+    // Just proceed to email/password page
+    // Profile picture will be uploaded during signup if selected
     setIsClosingProfilePage(true)
     setIsReturningFromEmailPassword(false)
     setTimeout(() => {
@@ -100,13 +134,50 @@ function Onboarding({ onGetStarted }) {
     }, 300)
   }
 
-  const handleCompleteSignup = () => {
+  const handleCompleteSignup = async () => {
+    // Validate inputs
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    if (!password || password.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      // Sign up with Firebase (profile picture will be uploaded during signup with actual user ID)
+      const result = await signUp(username, email, password, profilePictureFile)
+
+      setIsLoading(false)
+
+      if (!result.success) {
+        setError(result.error || 'Failed to create account')
+        return
+      }
+
+      // Cache profile picture if available
+      if (result.user.profilePictureUrl) {
+        localStorage.setItem('profilePictureUrl', result.user.profilePictureUrl)
+      }
+
+      // Success! Proceed to main app
     setIsClosingEmailPasswordPage(true)
     setTimeout(() => {
       setShowEmailPasswordPage(false)
       setIsClosingEmailPasswordPage(false)
-      onGetStarted(username)
+        // Pass the username from the result
+        onGetStarted(result.user.username)
     }, 300)
+    } catch (error) {
+      setIsLoading(false)
+      setError('An unexpected error occurred. Please try again.')
+      console.error('Signup error:', error)
+    }
   }
 
   const handleBackFromEmailPassword = () => {
@@ -123,15 +194,49 @@ function Onboarding({ onGetStarted }) {
     }, 300)
   }
 
-  const handleLoginComplete = () => {
-    setIsClosingWelcomeBackPage(true)
-    setTimeout(() => {
-      setShowWelcomeBackPage(false)
-      setIsClosingWelcomeBackPage(false)
-      // For login, we'd need to fetch the username from the backend
-      // For now, using a placeholder - you may want to store username in localStorage or fetch from API
-      onGetStarted(username || 'USER')
-    }, 300)
+  const handleLoginComplete = async () => {
+    // Validate inputs
+    if (!loginEmail.trim() || !loginEmail.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    if (!loginPassword) {
+      setError('Please enter your password')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      // Sign in with Firebase
+      const result = await signIn(loginEmail, loginPassword)
+
+      setIsLoading(false)
+
+      if (!result.success) {
+        setError(result.error || 'Failed to sign in')
+        return
+      }
+
+      // Cache profile picture if available
+      if (result.user.profilePictureUrl) {
+        localStorage.setItem('profilePictureUrl', result.user.profilePictureUrl)
+      }
+
+      // Success! Proceed to main app with the username from the result
+      setIsClosingWelcomeBackPage(true)
+      setTimeout(() => {
+        setShowWelcomeBackPage(false)
+        setIsClosingWelcomeBackPage(false)
+        onGetStarted(result.user.username)
+      }, 300)
+    } catch (error) {
+      setIsLoading(false)
+      setError('An unexpected error occurred. Please try again.')
+      console.error('Login error:', error)
+    }
   }
 
   const handleBackFromWelcomeBack = () => {
@@ -154,14 +259,36 @@ function Onboarding({ onGetStarted }) {
     if (file) {
       // Check if file is an image
       if (file.type.startsWith('image/')) {
+        // Store the actual file for upload
+        setProfilePictureFile(file)
+        // Also create preview
         const reader = new FileReader()
         reader.onloadend = () => {
           setProfilePicture(reader.result)
         }
         reader.readAsDataURL(file)
       } else {
-        alert('Please select an image file')
+        setError('Please select an image file')
       }
+    }
+  }
+
+  // Validate username on blur
+  const handleUsernameBlur = async () => {
+    if (!username.trim()) {
+      setUsernameError('')
+      return
+    }
+
+    setIsCheckingUsername(true)
+    setUsernameError('')
+    
+    const result = await checkUsernameAvailability(username)
+    
+    setIsCheckingUsername(false)
+    
+    if (!result.available) {
+      setUsernameError(result.error || 'Username is not available')
     }
   }
 
@@ -495,7 +622,9 @@ function Onboarding({ onGetStarted }) {
                 {/* Input Field */}
                 <div className="w-full max-w-sm mx-auto mb-6 sm:mb-8">
                   <div 
-                    className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl bg-white/90 backdrop-blur-sm"
+                    className={`rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl bg-white/90 backdrop-blur-sm ${
+                      usernameError ? 'border-2 border-red-500' : ''
+                    }`}
                     style={{
                       backgroundColor: 'rgba(255, 182, 193, 0.95)',
                       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
@@ -506,13 +635,24 @@ function Onboarding({ onGetStarted }) {
                       <input
                         type="text"
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e) => {
+                          setUsername(e.target.value)
+                          setUsernameError('') // Clear error when user types
+                        }}
+                        onBlur={handleUsernameBlur}
                         placeholder=""
                         className="flex-1 bg-transparent border-none outline-none text-gray-900 font-medium text-base sm:text-lg placeholder-gray-400"
                         autoFocus
+                        disabled={isCheckingUsername}
                       />
+                      {isCheckingUsername && (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
+                      )}
                     </div>
                   </div>
+                  {usernameError && (
+                    <p className="text-red-600 font-semibold text-sm sm:text-base mt-2 text-center bg-white/90 rounded-lg px-3 py-2 shadow-lg border-2 border-red-500">{usernameError}</p>
+                  )}
                 </div>
 
                 {/* Continue Button */}
@@ -524,13 +664,14 @@ function Onboarding({ onGetStarted }) {
                 >
                   <button
                     onClick={handleContinue}
-                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
+                    disabled={isLoading || isCheckingUsername || !!usernameError}
+                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       backgroundColor: 'rgba(255, 182, 193, 0.95)',
                       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
                     }}
                   >
-                    Continue
+                    {isLoading ? 'Checking...' : 'Continue'}
                   </button>
                 </div>
               </div>
@@ -554,6 +695,13 @@ function Onboarding({ onGetStarted }) {
                     Choose a profile picture
                   </h2>
                 </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="w-full max-w-sm mx-auto mb-4">
+                    <p className="text-red-600 font-semibold text-sm sm:text-base text-center bg-white/90 rounded-lg px-4 py-3 shadow-lg border-2 border-red-500">{error}</p>
+                  </div>
+                )}
 
                 {/* Profile Picture Placeholder */}
                 <div className="flex flex-col items-center mb-6 sm:mb-8">
@@ -629,13 +777,14 @@ function Onboarding({ onGetStarted }) {
                 >
                   <button
                     onClick={handleSkipProfile}
-                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
+                    disabled={isLoading}
+                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       backgroundColor: 'rgba(255, 182, 193, 0.95)',
                       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
                     }}
                   >
-                    Next
+                    {isLoading ? 'Uploading...' : 'Next'}
                   </button>
                 </div>
 
@@ -670,6 +819,13 @@ function Onboarding({ onGetStarted }) {
                   </p>
                 </div>
 
+                {/* Error Display */}
+                {error && (
+                  <div className="w-full max-w-sm mx-auto mb-4">
+                    <p className="text-red-600 font-semibold text-sm sm:text-base text-center bg-white/90 rounded-lg px-4 py-3 shadow-lg border-2 border-red-500">{error}</p>
+                  </div>
+                )}
+
                 {/* Email Input Field */}
                 <div className="w-full max-w-sm mx-auto mb-4 sm:mb-6">
                   <div 
@@ -682,10 +838,14 @@ function Onboarding({ onGetStarted }) {
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value)
+                        setError('') // Clear error when user types
+                      }}
                       placeholder="Email"
                       className="w-full bg-transparent border-none outline-none text-gray-900 font-medium text-base sm:text-lg placeholder-gray-600"
                       autoFocus
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -702,9 +862,13 @@ function Onboarding({ onGetStarted }) {
                     <input
                       type="password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value)
+                        setError('') // Clear error when user types
+                      }}
                       placeholder="Password"
                       className="w-full bg-transparent border-none outline-none text-gray-900 font-medium text-base sm:text-lg placeholder-gray-600"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -718,13 +882,14 @@ function Onboarding({ onGetStarted }) {
                 >
                   <button
                     onClick={handleCompleteSignup}
-                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
+                    disabled={isLoading}
+                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       backgroundColor: 'rgba(255, 182, 193, 0.95)',
                       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
                     }}
                   >
-                    Next
+                    {isLoading ? 'Creating Account...' : 'Next'}
                   </button>
                 </div>
               </div>
@@ -747,6 +912,13 @@ function Onboarding({ onGetStarted }) {
                   </h2>
                 </div>
 
+                {/* Error Display */}
+                {error && (
+                  <div className="w-full max-w-sm mx-auto mb-4">
+                    <p className="text-red-600 font-semibold text-sm sm:text-base text-center bg-white/90 rounded-lg px-4 py-3 shadow-lg border-2 border-red-500">{error}</p>
+                  </div>
+                )}
+
                 {/* Email Input Field */}
                 <div className="w-full max-w-sm mx-auto mb-4 sm:mb-6">
                   <div 
@@ -759,10 +931,14 @@ function Onboarding({ onGetStarted }) {
                     <input
                       type="email"
                       value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
+                      onChange={(e) => {
+                        setLoginEmail(e.target.value)
+                        setError('') // Clear error when user types
+                      }}
                       placeholder="Email"
                       className="w-full bg-transparent border-none outline-none text-gray-900 font-medium text-base sm:text-lg placeholder-gray-600"
                       autoFocus
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -779,9 +955,13 @@ function Onboarding({ onGetStarted }) {
                     <input
                       type="password"
                       value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
+                      onChange={(e) => {
+                        setLoginPassword(e.target.value)
+                        setError('') // Clear error when user types
+                      }}
                       placeholder="Password"
                       className="w-full bg-transparent border-none outline-none text-gray-900 font-medium text-base sm:text-lg placeholder-gray-600"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -795,13 +975,14 @@ function Onboarding({ onGetStarted }) {
                 >
                   <button
                     onClick={handleLoginComplete}
-                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
+                    disabled={isLoading}
+                    className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       backgroundColor: 'rgba(255, 182, 193, 0.95)',
                       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
                     }}
                   >
-                    Login
+                    {isLoading ? 'Signing In...' : 'Login'}
                   </button>
                 </div>
               </div>
