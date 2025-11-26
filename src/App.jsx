@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './Home'
 import Onboarding from './Onboarding'
 import LetterPage from './LetterPage'
+import SchoolPage from './SchoolPage'
 import { onAuthStateChange, getCurrentUser } from './firebase/auth'
 
 function App() {
@@ -136,6 +137,9 @@ function App() {
       <Routes>
         {/* Letter Page Route - Public, accessible on all devices */}
         <Route path="/letter/:username" element={<LetterPage />} />
+        
+        {/* School Page Route - Public, accessible on all devices */}
+        <Route path="/school/:schoolName" element={<SchoolPage />} />
         
         {/* Main App Routes - Mobile only */}
         <Route 
