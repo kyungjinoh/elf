@@ -92,9 +92,12 @@ function LetterPage() {
   if (showMessageSent) {
     return (
       <div 
-        className="min-h-screen flex flex-col items-center justify-center px-4 py-6 sm:py-8 relative"
+        className="flex flex-col items-center justify-center px-4 py-6 sm:py-8 relative"
         style={{
+          minHeight: '100dvh',
           background: 'linear-gradient(to bottom, #ec4899 0%, #dc2626 25%, #f97316 100%)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
         {/* Snow Effect */}
@@ -138,7 +141,12 @@ function LetterPage() {
           </div>
 
           {/* Receive Letter Button */}
-          <div className="w-full max-w-md mx-auto relative">
+          <div 
+            className="w-full max-w-md mx-auto relative"
+            style={{
+              marginBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+            }}
+          >
             <button 
               onClick={() => navigate('/')}
               className="w-full py-4 sm:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
@@ -161,9 +169,12 @@ function LetterPage() {
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-start px-4 py-6 sm:py-8 relative"
+      className="flex flex-col items-center justify-start px-4 py-6 sm:py-8 relative"
       style={{
+        minHeight: '100dvh',
         background: 'linear-gradient(to bottom, #ec4899 0%, #dc2626 25%, #f97316 100%)',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       {/* Status Bar (thin pink bar at top) */}
@@ -287,7 +298,12 @@ function LetterPage() {
       </div>
 
       {/* Bottom Section */}
-      <div className="relative z-10 text-center mb-6 w-full px-4">
+      <div 
+        className="relative z-10 text-center w-full px-4"
+        style={{
+          marginBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
         
         {/* Get your own messages button */}
         <button 

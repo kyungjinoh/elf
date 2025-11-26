@@ -14,6 +14,7 @@ function Home({ username: propUsername = '' }) {
   const textInputRef = useRef(null)
   const textContainerRef = useRef(null)
   const navBarRef = useRef(null)
+  const videoRef = useRef(null)
 
   // Get domain address from current location (includes port number)
   const websiteAddress = typeof window !== 'undefined' ? window.location.host : ''
@@ -34,7 +35,38 @@ function Home({ username: propUsername = '' }) {
 
   const handleCloseSharePopup = () => {
     setShowSharePopup(false)
+    // Exit picture-in-picture if active
+    if (videoRef.current && document.pictureInPictureElement) {
+      document.exitPictureInPicture().catch(() => {})
+    }
   }
+
+  // Enter picture-in-picture when share popup opens
+  useEffect(() => {
+    if (showSharePopup && videoRef.current) {
+      const video = videoRef.current
+      
+      // Play video and enter PiP
+      const enterPiP = async () => {
+        try {
+          // Check if PiP is supported
+          if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
+            await video.play()
+            await video.requestPictureInPicture()
+          }
+        } catch (error) {
+          console.log('Picture-in-picture not available:', error)
+        }
+      }
+
+      // Small delay to ensure video is ready
+      const timer = setTimeout(() => {
+        enterPiP()
+      }, 300)
+
+      return () => clearTimeout(timer)
+    }
+  }, [showSharePopup])
 
   const handleShare = () => {
     // Copy link to clipboard
@@ -261,6 +293,19 @@ function Home({ username: propUsername = '' }) {
             backgroundRepeat: 'no-repeat',
           }}
         >
+          {/* Hidden Video for Picture-in-Picture */}
+          <video
+            ref={videoRef}
+            className="hidden"
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{ display: 'none' }}
+          >
+            <source src="/video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
 
           {/* Close Button */}
           <div className="absolute top-4 right-4 z-10">
