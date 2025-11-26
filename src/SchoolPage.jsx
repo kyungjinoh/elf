@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 function SchoolPage() {
   const { schoolName } = useParams()
   const navigate = useNavigate()
-  const [countdown, setCountdown] = useState(5)
+  const [countdown, setCountdown] = useState(7)
 
   // Decode school name from URL
   const decodedSchoolName = schoolName ? decodeURIComponent(schoolName) : '[학교이름]'
@@ -108,7 +108,7 @@ function SchoolPage() {
           <div 
             className="absolute bottom-0 left-0 h-1 bg-white transition-all ease-linear"
             style={{ 
-              width: `${(countdown / 5) * 100}%`,
+              width: `${(countdown / 7) * 100}%`,
               transitionDuration: '1s',
             }}
           />
