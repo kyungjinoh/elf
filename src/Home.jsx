@@ -186,6 +186,8 @@ function Home({ username: propUsername = '' }) {
       }
     }
 
+    // Call immediately on mount, then set up interval
+    refreshViewsCount()
     const refreshInterval = setInterval(refreshViewsCount, 10000)
     return () => clearInterval(refreshInterval)
   }, [])
