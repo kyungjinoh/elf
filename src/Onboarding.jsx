@@ -399,7 +399,7 @@ function Onboarding({ onGetStarted }) {
             ))}
           </div>
 
-          <div className="relative z-10 h-screen overflow-hidden">
+          <div className="relative z-10 h-screen overflow-y-auto">
             {/* Fixed Header - Back Button, Skip Button, Logo */}
             <div className="absolute inset-x-0 top-0 z-30 px-6 sm:px-8 pt-6 sm:pt-8">
               {/* Back Button */}
@@ -443,14 +443,14 @@ function Onboarding({ onGetStarted }) {
             </div>
 
             {/* Sliding Content Container */}
-            <div className="h-full flex flex-col px-6 sm:px-8 pt-6 sm:pt-8 pb-8 sm:pb-12">
+            <div className="min-h-full flex flex-col px-6 sm:px-8 pt-6 sm:pt-8 pb-8 sm:pb-12">
               {/* Spacer for fixed logo */}
               <div className="h-32 sm:h-40"></div>
 
             {/* Username Content - Slides */}
             {showUsernamePage && !showProfilePage && !showEmailPasswordPage && !showWelcomeBackPage && (
               <div 
-                className="flex-1 flex flex-col"
+                className="flex-1 flex flex-col min-h-0"
                 style={{
                   animation: isClosingUsernamePage 
                     ? 'slideOutToLeft 0.3s ease-out' 
@@ -493,7 +493,7 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Continue Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto">
+                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
                   <button
                     onClick={handleContinue}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
@@ -511,7 +511,7 @@ function Onboarding({ onGetStarted }) {
             {/* Profile Picture Content - Slides */}
             {((showProfilePage && !showEmailPasswordPage && !showWelcomeBackPage) || isClosingProfilePage) && (
               <div 
-                className="flex-1 flex flex-col"
+                className="flex-1 flex flex-col min-h-0"
                 style={{
                   animation: isClosingProfilePage 
                     ? 'slideOutToLeft 0.3s ease-out' 
@@ -593,7 +593,7 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Next Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto">
+                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
                   <button
                     onClick={handleSkipProfile}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
@@ -620,7 +620,7 @@ function Onboarding({ onGetStarted }) {
             {/* Email/Password Content - Slides */}
             {showEmailPasswordPage && !showWelcomeBackPage && (
               <div 
-                className="flex-1 flex flex-col"
+                className="flex-1 flex flex-col min-h-0"
                 style={{
                   animation: isClosingEmailPasswordPage 
                     ? 'slideOutToRight 0.3s ease-out' 
@@ -677,7 +677,7 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Next/Complete Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto">
+                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
                   <button
                     onClick={handleCompleteSignup}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
@@ -695,7 +695,7 @@ function Onboarding({ onGetStarted }) {
             {/* Welcome Back Content - Slides */}
             {showWelcomeBackPage && (
               <div 
-                className="flex-1 flex flex-col"
+                className="flex-1 flex flex-col min-h-0"
                 style={{
                   animation: isClosingWelcomeBackPage 
                     ? 'slideOutToRight 0.3s ease-out' 
@@ -749,7 +749,7 @@ function Onboarding({ onGetStarted }) {
                 </div>
 
                 {/* Login Button */}
-                <div className="w-full max-w-sm mx-auto mt-auto">
+                <div className="w-full max-w-sm mx-auto mt-auto mb-4 sm:mb-6">
                   <button
                     onClick={handleLoginComplete}
                     className="w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl active:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-bold text-black text-base sm:text-lg md:text-xl"
