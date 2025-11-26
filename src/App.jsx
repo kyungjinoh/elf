@@ -9,6 +9,33 @@ function App() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false)
   const [username, setUsername] = useState('')
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isMobile, setIsMobile] = useState(true)
+
+  // Detect if device is mobile (phone only, not iPad/desktop)
+  useEffect(() => {
+    const checkDevice = () => {
+      const width = window.innerWidth
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera
+      
+      // Check if it's an iPad (iPadOS 13+ reports as MacIntel with touch)
+      const isIPad = /iPad/.test(userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      
+      // Allow only mobile phones (width < 768px and not iPad)
+      // Block iPad (any width) and desktop/laptop (width >= 768px)
+      const isMobile = width < 768 && !isIPad
+      
+      setIsMobile(isMobile)
+    }
+
+    checkDevice()
+    window.addEventListener('resize', checkDevice)
+    window.addEventListener('orientationchange', checkDevice)
+    return () => {
+      window.removeEventListener('resize', checkDevice)
+      window.removeEventListener('orientationchange', checkDevice)
+    }
+  }, [])
 
   const handleGetStarted = (userUsername) => {
     setUsername(userUsername)
@@ -107,14 +134,40 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Letter Page Route - Public, accessible without onboarding */}
+        {/* Letter Page Route - Public, accessible on all devices */}
         <Route path="/letter/:username" element={<LetterPage />} />
         
-        {/* Main App Routes */}
+        {/* Main App Routes - Mobile only */}
         <Route 
           path="*" 
           element={
-            !hasCompletedOnboarding ? (
+            !isMobile ? (
+              // Show mobile-only message for desktop/iPad on main app routes
+              <div 
+                className="fixed inset-0 flex items-center justify-center px-4"
+                style={{
+                  background: 'linear-gradient(to bottom, #ec4899 0%, #dc2626 25%, #f97316 100%)',
+                }}
+              >
+                <div className="text-center max-w-md">
+                  <img 
+                    src="/ELF-removebg-preview.png" 
+                    alt="ELF" 
+                    className="h-32 w-auto mx-auto mb-8 object-contain drop-shadow-2xl"
+                    style={{
+                      filter: 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))',
+                    }}
+                  />
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                    Please use mobile to view
+                  </h1>
+                  <p className="text-lg sm:text-xl md:text-2xl text-white/90 drop-shadow-md">
+                    This app is optimized for mobile devices. Please open it on your phone for the best experience.
+                  </p>
+                  <div className="mt-8 text-6xl animate-bounce">📱</div>
+                </div>
+              </div>
+            ) : !hasCompletedOnboarding ? (
               <Onboarding onGetStarted={handleGetStarted} />
             ) : (
               <Home username={username} />

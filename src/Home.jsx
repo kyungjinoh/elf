@@ -4,6 +4,7 @@ import { getCurrentUser, uploadProfilePicture } from './firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from './firebase/config'
 import { getMessages, markMessageAsRead, getUnreadCount } from './firebase/messages'
+import { getViews, formatTimeAgo } from './firebase/views'
 
 function Home({ username: propUsername = '' }) {
   const navigate = useNavigate()
@@ -20,6 +21,7 @@ function Home({ username: propUsername = '' }) {
   const [messages, setMessages] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [showLetterPopup, setShowLetterPopup] = useState(false)
+  const [views, setViews] = useState([])
   const textInputRef = useRef(null)
   const textContainerRef = useRef(null)
   const navBarRef = useRef(null)
@@ -49,6 +51,25 @@ function Home({ username: propUsername = '' }) {
       }
     } catch (error) {
       console.error('Error loading messages:', error)
+    }
+  }
+
+  // Function to load views
+  const loadViews = async () => {
+    try {
+      const result = await getCurrentUser()
+      if (result.success && result.user.uid) {
+        const viewsResult = await getViews(result.user.uid)
+        if (viewsResult.success) {
+          setViews(viewsResult.views || [])
+        } else {
+          console.error('Failed to get views:', viewsResult.error)
+          setViews([])
+        }
+      }
+    } catch (error) {
+      console.error('Error loading views:', error)
+      setViews([])
     }
   }
 
@@ -138,6 +159,37 @@ function Home({ username: propUsername = '' }) {
     }
   }, [showInbox])
 
+  // Refresh views when viewers screen is open
+  useEffect(() => {
+    if (showViewers) {
+      loadViews()
+      const refreshInterval = setInterval(() => {
+        loadViews()
+      }, 5000)
+      return () => clearInterval(refreshInterval)
+    }
+  }, [showViewers])
+
+  // Periodically refresh views count for badge (every 10 seconds)
+  useEffect(() => {
+    const refreshViewsCount = async () => {
+      try {
+        const result = await getCurrentUser()
+        if (result.success && result.user.uid) {
+          const viewsResult = await getViews(result.user.uid)
+          if (viewsResult.success) {
+            setViews(viewsResult.views || [])
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing views count:', error)
+      }
+    }
+
+    const refreshInterval = setInterval(refreshViewsCount, 10000)
+    return () => clearInterval(refreshInterval)
+  }, [])
+
   // Generate dynamic link
   const userLink = `${websiteAddress}/letter/${username}`
 
@@ -166,9 +218,11 @@ function Home({ username: propUsername = '' }) {
     }, 500)
   }
 
-  const handleViewersClick = () => {
+  const handleViewersClick = async () => {
     setIsClosingViewers(false)
     setShowViewers(true)
+    // Fetch views when viewers screen opens
+    await loadViews()
   }
 
   const handleCloseViewers = () => {
@@ -379,15 +433,20 @@ function Home({ username: propUsername = '' }) {
           </button>
           <button 
             onClick={handleInboxClick}
-            className={`text-lg sm:text-xl md:text-2xl transition-all duration-200 cursor-pointer ${showInbox ? 'font-bold text-gray-900' : 'font-medium text-gray-400 hover:text-gray-600'}`}
+            className={`text-lg sm:text-xl md:text-2xl transition-all duration-200 cursor-pointer relative ${showInbox ? 'font-bold text-gray-900' : 'font-medium text-gray-400 hover:text-gray-600'}`}
           >
             INBOX
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 sm:-top-2.5 sm:-right-2.5 bg-red-500 text-white text-xs sm:text-sm font-bold rounded-full min-w-[18px] sm:min-w-[20px] h-[18px] sm:h-[20px] flex items-center justify-center px-1 sm:px-1.5 shadow-md border-2 border-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </button>
         </div>
         <div className="flex-1 flex justify-end">
           <button 
             onClick={handleViewersClick}
-            className="text-gray-500 hover:text-gray-700 transition-all duration-200 cursor-pointer"
+            className="text-gray-500 hover:text-gray-700 transition-all duration-200 cursor-pointer relative"
           >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -408,6 +467,11 @@ function Home({ username: propUsername = '' }) {
               d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
             />
           </svg>
+          {views.length > 0 && (
+            <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 bg-red-500 text-white text-xs sm:text-sm font-bold rounded-full min-w-[18px] sm:min-w-[20px] h-[18px] sm:h-[20px] flex items-center justify-center px-1 sm:px-1.5 shadow-md border-2 border-white">
+              {views.length > 99 ? '99+' : views.length}
+            </span>
+          )}
           </button>
         </div>
       </nav>
@@ -701,51 +765,39 @@ function Home({ username: propUsername = '' }) {
 
           {/* View Notifications List */}
           <div className="py-2">
-            {[
-              { time: '33 minutes ago' },
-              { time: '35 minutes ago' },
-              { time: '2 hours ago' },
-              { time: '2 hours ago' },
-              { time: '2 hours ago' },
-              { time: '2 hours ago' },
-              { time: '4 hours ago' },
-            ].map((view, index) => (
-              <div 
-                key={index}
-                className="flex items-center px-4 sm:px-6 py-5 sm:py-6 md:py-7 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                {/* Avatar Icon */}
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 overflow-hidden">
-                  <img 
-                    src="/eyes.png" 
-                    alt="Eyes" 
-                    className="w-full h-full object-cover rounded-full"
-                    onError={(e) => {
-                      // Fallback to placeholder if image doesn't exist
-                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3EUser%3C/text%3E%3C/svg%3E'
-                    }}
-                  />
-                </div>
-
-                {/* Notification Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm sm:text-base font-medium" style={{ color: '#be2616' }}>New view!</p>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">{view.time}</p>
-                </div>
-
-                {/* Chevron */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400 flex-shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+            {views.length === 0 ? (
+              <div className="px-4 sm:px-6 py-8 sm:py-12 text-center">
+                <p className="text-gray-400 text-sm sm:text-base">No views yet</p>
               </div>
-            ))}
+            ) : (
+              views.map((view) => (
+                <div 
+                  key={view.id}
+                  className="flex items-center px-4 sm:px-6 py-5 sm:py-6 md:py-7 border-b border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  {/* Avatar Icon */}
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 overflow-hidden">
+                    <img 
+                      src="/eyes.png" 
+                      alt="Eyes" 
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        // Fallback to placeholder if image doesn't exist
+                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3EUser%3C/text%3E%3C/svg%3E'
+                      }}
+                    />
+                  </div>
+
+                  {/* Notification Content */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base font-medium" style={{ color: '#be2616' }}>New view!</p>
+                    <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+                      {formatTimeAgo(view.timestamp || view.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

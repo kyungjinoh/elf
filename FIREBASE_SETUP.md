@@ -57,6 +57,20 @@ service cloud.firestore {
       // Allow update if user is authenticated and is the recipient (for marking as read)
       allow update: if request.auth != null && request.auth.uid == resource.data.recipientId;
     }
+
+    // Views collection - tracks when someone visits a user's letter page
+    match /views/{viewId} {
+      // Allow unauthenticated users to create views (when visiting letter pages for the first time)
+      allow create: if request.resource.data.userId != null
+        && request.resource.data.username != null
+        && request.resource.data.visitorId != null
+        && request.resource.data.createdAt != null;
+      // Allow unauthenticated users to read views to check if they've already viewed (for duplicate prevention)
+      // This allows checking by visitorId to see if a view already exists
+      allow read: if true;
+      // Allow authenticated users to read their own views (for displaying in Recent Views)
+      // This is already covered by the allow read: if true above, but kept for clarity
+    }
   }
 }
 ```

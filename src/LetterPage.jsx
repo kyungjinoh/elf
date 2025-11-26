@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from './firebase/config'
 import { sendMessage } from './firebase/messages'
+import { trackView } from './firebase/views'
 
 function LetterPage() {
   const { username } = useParams()
@@ -13,6 +14,7 @@ function LetterPage() {
   const [profilePictureUrl, setProfilePictureUrl] = useState('/letter.png')
   const [userMessage, setUserMessage] = useState('send me anonymous X-mas letter!')
   const [isSending, setIsSending] = useState(false)
+  const hasTrackedView = useRef(false)
   
   const handleSend = async () => {
     if (!message.trim()) {
@@ -104,6 +106,25 @@ function LetterPage() {
     return () => clearInterval(interval)
   }, [])
 
+  // Track view when page loads (only once per page load)
+  useEffect(() => {
+    const trackPageView = async () => {
+      if (!username || hasTrackedView.current) return
+      
+      hasTrackedView.current = true
+      
+      try {
+        await trackView(username)
+      } catch (error) {
+        console.error('Error tracking view:', error)
+        // Don't show error to user, just log it
+        hasTrackedView.current = false // Reset on error so it can retry
+      }
+    }
+
+    trackPageView()
+  }, [username])
+
   // Fetch user data (profile picture and message) based on username
   useEffect(() => {
     const fetchUserData = async () => {
@@ -184,21 +205,21 @@ function LetterPage() {
         {/* Message Sent Screen */}
         <div className="relative z-10 flex flex-col items-center text-center">
           {/* Letter Delivered Title */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6 md:mb-4 lg:mb-6">
             Letter Delivered
           </h1>
           
           {/* Title */}
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl md:text-2xl lg:text-3xl font-bold text-white mb-6 sm:mb-8 md:mb-6 lg:mb-8 px-4">
             @{username ? username.toUpperCase() : 'USER'} + 15 Others Wants To Send You Letters!
           </h2>
 
           {/* Love Letter Image */}
-          <div className="mb-6 sm:mb-8">
+          <div className="mb-6 sm:mb-8 md:mb-6 lg:mb-8">
             <img 
               src="/loveletter.png" 
               alt="Love Letter" 
-              className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto"
+              className="max-w-xs sm:max-w-sm md:max-w-xs lg:max-w-sm mx-auto"
             />
           </div>
 
@@ -211,7 +232,7 @@ function LetterPage() {
           >
             <button 
               onClick={() => navigate('/')}
-              className="w-full py-4 sm:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
+              className="w-full py-4 sm:py-5 md:py-4 lg:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg md:text-base lg:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
             >
               {/* Progress Bar */}
               <div 
@@ -231,7 +252,7 @@ function LetterPage() {
 
   return (
     <div 
-      className="flex flex-col items-center justify-start px-4 py-6 sm:py-8 relative"
+      className="flex flex-col items-center justify-start px-4 py-6 sm:py-8 md:py-6 lg:py-8 relative"
       style={{
         minHeight: '100dvh',
         background: 'linear-gradient(to bottom, #ec4899 0%, #dc2626 25%, #f97316 100%)',
@@ -262,11 +283,11 @@ function LetterPage() {
       </div>
       
       {/* Main Card */}
-      <div className="relative z-10 w-full max-w-xs sm:max-w-[280px] mb-6 sm:mb-8 mt-8 sm:mt-12 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="relative z-10 w-full max-w-xs sm:max-w-[280px] md:max-w-xs lg:max-w-sm xl:max-w-sm mb-6 sm:mb-8 md:mb-6 lg:mb-8 mt-8 sm:mt-12 md:mt-8 lg:mt-10 rounded-3xl overflow-hidden shadow-2xl">
         {/* White Header Section */}
-        <div className="bg-white px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-3 sm:gap-4">
+        <div className="bg-white px-4 sm:px-6 md:px-4 lg:px-5 py-2 sm:py-3 md:py-2 lg:py-3 flex items-center gap-3 sm:gap-4 md:gap-3 lg:gap-4">
           {/* Profile Picture */}
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0 bg-pink-100 flex items-center justify-center">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden flex-shrink-0 bg-pink-100 flex items-center justify-center">
             <img 
               src={profilePictureUrl}
               alt="Profile" 
@@ -279,10 +300,10 @@ function LetterPage() {
           
           {/* Username and Message */}
           <div className="flex-1 min-w-0">
-            <div className="text-sm sm:text-base font-semibold text-gray-900">
+            <div className="text-sm sm:text-base md:text-sm lg:text-base font-semibold text-gray-900">
               @{username ? username.toUpperCase() : 'USER'}
             </div>
-            <div className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mt-0.5">
+            <div className="text-sm sm:text-base md:text-sm lg:text-base font-bold text-gray-900 mt-0.5">
               {userMessage}
             </div>
           </div>
@@ -290,7 +311,7 @@ function LetterPage() {
 
         {/* Translucent Pink/Red Body */}
         <div 
-          className="px-4 sm:px-6 py-3 sm:py-4 relative"
+          className="px-4 sm:px-6 md:px-4 lg:px-5 py-3 sm:py-4 md:py-3 lg:py-4 relative"
           style={{
             backgroundColor: 'rgba(255, 182, 193, 0.7)',
             backdropFilter: 'blur(10px)',
@@ -303,7 +324,7 @@ function LetterPage() {
               rows={3}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="py-2 pt-2 bg-transparent border-none outline-none text-gray-800 font-medium text-xl sm:text-2xl md:text-3xl lg:text-4xl placeholder-gray-600 resize-none align-top"
+              className="py-2 pt-2 bg-transparent border-none outline-none text-gray-800 font-medium text-xl sm:text-2xl md:text-xl lg:text-2xl placeholder-gray-600 resize-none align-top"
               style={{ 
                 verticalAlign: 'top', 
                 width: '100%', 
@@ -321,9 +342,9 @@ function LetterPage() {
       {/* Mid Section - Padlock Emoji and Text */}
       <div className="relative z-10 flex flex-col items-center -mt-2 sm:-mt-1">
         {/* Anonymous x-mas letter text with padlock emoji */}
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-4 sm:mb-6 md:mb-4 lg:mb-6">
           <span 
-            className="text-base sm:text-lg font-semibold text-white"
+            className="text-base sm:text-lg md:text-base lg:text-lg font-semibold text-white"
           >
             🔒 anonymous x-mas letter
           </span>
@@ -331,11 +352,11 @@ function LetterPage() {
 
         {/* Send Button - appears when user types */}
         {message.trim() && (
-          <div className="mb-6 sm:mb-8 w-full px-4 text-center">
+          <div className="mb-6 sm:mb-8 md:mb-6 lg:mb-8 w-full px-4 text-center">
             <button 
               onClick={handleSend}
               disabled={isSending}
-              className="py-4 sm:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="py-4 sm:py-5 md:py-4 lg:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg md:text-base lg:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ width: '75%', maxWidth: '750px', margin: '0 auto' }}
             >
               {isSending ? 'Sending...' : 'Send!'}
@@ -345,15 +366,15 @@ function LetterPage() {
 
         {/* Spacer for when Send button is not shown - pulls elements down by default */}
         {!message.trim() && (
-          <div className="mb-6 sm:mb-8"></div>
+          <div className="mb-6 sm:mb-8 md:mb-6 lg:mb-8"></div>
         )}
       </div>
 
       {/* Friends count with hand emojis - separate section */}
-      <div className="relative z-10 flex items-center justify-center gap-2 mb-4 sm:mb-6" style={{ marginTop: '60px' }}>
+      <div className="relative z-10 flex items-center justify-center gap-2 mb-4 sm:mb-6 md:mb-4 lg:mb-6" style={{ marginTop: '60px' }}>
         <span className="text-2xl">👇</span>
         <span 
-          className="text-sm sm:text-base font-medium text-white"
+          className="text-sm sm:text-base md:text-sm lg:text-base font-medium text-white"
         >
           {friendCount} friends just tapped the button
         </span>
@@ -371,18 +392,12 @@ function LetterPage() {
         {/* Get your own messages button */}
         <button 
           onClick={() => navigate('/')}
-          className="w-full max-w-2xl mx-auto py-4 sm:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+          className="w-full max-w-2xl mx-auto py-4 sm:py-5 md:py-4 lg:py-5 rounded-2xl bg-black text-white font-bold text-base sm:text-lg md:text-base lg:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
         >
           Get your own messages!
         </button>
       </div>
 
-      {/* Terms and Privacy */}
-      <div className="relative z-10 flex items-center justify-center gap-4 mt-auto pt-4 text-xs sm:text-sm" style={{ color: '#a78b5b' }}>
-        <a href="#" className="hover:underline">Terms</a>
-        <span>•</span>
-        <a href="#" className="hover:underline">Privacy</a>
-      </div>
     </div>
   )
 }
