@@ -41,21 +41,33 @@ function Home({ username: propUsername = '' }) {
     }
   }
 
+  // Detect iOS
+  const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+
   // Enter picture-in-picture when share popup opens
   useEffect(() => {
     if (showSharePopup && videoRef.current) {
       const video = videoRef.current
       
-      // Play video and enter PiP
+      // Play video and enter PiP (or just play on iOS)
       const enterPiP = async () => {
         try {
-          // Check if PiP is supported
+          // On iOS, just play the video (PiP API not supported programmatically)
+          if (isIOS) {
+            await video.play()
+            return
+          }
+          
+          // Check if PiP is supported on other platforms
           if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
             await video.play()
             await video.requestPictureInPicture()
+          } else {
+            // Fallback: just play the video if PiP not supported
+            await video.play()
           }
         } catch (error) {
-          console.log('Picture-in-picture not available:', error)
+          console.log('Video playback not available:', error)
         }
       }
 
@@ -66,7 +78,7 @@ function Home({ username: propUsername = '' }) {
 
       return () => clearTimeout(timer)
     }
-  }, [showSharePopup])
+  }, [showSharePopup, isIOS])
 
   const handleShare = () => {
     // Copy link to clipboard
@@ -293,15 +305,16 @@ function Home({ username: propUsername = '' }) {
             backgroundRepeat: 'no-repeat',
           }}
         >
-          {/* Hidden Video for Picture-in-Picture */}
+          {/* Video for Picture-in-Picture (visible on iOS, hidden on other platforms) */}
           <video
             ref={videoRef}
-            className="hidden"
             autoPlay
             loop
             muted
             playsInline
-            style={{ display: 'none' }}
+            controls={isIOS}
+            className={isIOS ? "fixed bottom-4 right-4 w-48 h-auto rounded-lg shadow-2xl z-50" : "hidden"}
+            style={isIOS ? {} : { display: 'none' }}
           >
             <source src="/video.mp4" type="video/mp4" />
             Your browser does not support the video tag.
