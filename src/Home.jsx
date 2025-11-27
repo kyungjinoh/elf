@@ -414,7 +414,7 @@ function Home({ username: propUsername = '' }) {
 
       {/* Top Navigation */}
       <nav ref={navBarRef} className="flex items-center justify-between px-4 sm:px-6 pt-2 sm:pt-3 pb-1.5 sm:pb-2 flex-shrink-0 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm relative z-10">
-        <div className="flex-1 flex items-center">
+        <div className="flex-1 flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => navigate('/')}
             className="cursor-pointer hover:opacity-80 transition-opacity"
@@ -425,6 +425,18 @@ function Home({ username: propUsername = '' }) {
               className="h-6 sm:h-7 md:h-8 object-contain drop-shadow-sm"
             />
           </button>
+          <a
+            href="https://discord.gg/gGqrFQRjmE"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cursor-pointer hover:opacity-80 transition-opacity rounded-full overflow-hidden"
+          >
+            <img 
+              src="/discordli.jpg" 
+              alt="Discord" 
+              className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 object-cover drop-shadow-sm rounded-full"
+            />
+          </a>
         </div>
         <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1 justify-center">
           <button 
