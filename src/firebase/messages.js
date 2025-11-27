@@ -145,3 +145,35 @@ export const getUnreadCount = async (userId) => {
   }
 }
 
+/**
+ * Create a default welcome message for a new user
+ */
+export const createDefaultWelcomeMessage = async (userId, username) => {
+  try {
+    if (!userId) {
+      return { success: false, error: 'User ID is required' }
+    }
+
+    const messagesRef = collection(db, 'messages')
+    const messageData = {
+      recipientId: userId,
+      recipientUsername: username || 'User',
+      message: 'Welcome to ELF! This is your first letter. Share your link to receive more anonymous X-mas letters!',
+      read: false,
+      createdAt: new Date().toISOString(),
+      isSystemMessage: true, // Mark as system message
+      ipAddress: null, // System messages don't have IP
+    }
+
+    const docRef = await addDoc(messagesRef, messageData)
+
+    return { 
+      success: true, 
+      messageId: docRef.id 
+    }
+  } catch (error) {
+    console.error('Error creating default welcome message:', error)
+    return { success: false, error: 'Failed to create welcome message' }
+  }
+}
+

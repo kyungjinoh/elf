@@ -562,22 +562,6 @@ function Home({ username: propUsername = '' }) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Sparkle Effects */}
-            <div className="absolute inset-0 pointer-events-none">
-              {[...Array(12)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-2 h-2 bg-white rounded-full"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    animation: `sparkle ${2 + Math.random() * 2}s ease-in-out infinite`,
-                    animationDelay: `${Math.random() * 2}s`,
-                  }}
-                />
-              ))}
-            </div>
-
             {/* Main Message - Shows cardText */}
             <div className="text-center mb-6 sm:mb-8 relative z-10">
               <p 
@@ -601,18 +585,21 @@ function Home({ username: propUsername = '' }) {
               }}
             >
               <p 
-                className="text-gray-900 text-base sm:text-lg md:text-xl font-bold text-center"
+                className={`text-base sm:text-lg md:text-xl font-bold text-center ${
+                  messages.length < 10 ? 'text-red-600' : 'text-gray-900'
+                }`}
                 style={{
                   textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                 }}
               >
-                Letter will be delivered to you on the X-Mas day
+                {messages.length < 10 ? (
+                  <>
+                    Receive {10 - messages.length} more letter{10 - messages.length !== 1 ? 's' : ''} to see letter
+                  </>
+                ) : (
+                  'Letter will be delivered to you on the X-Mas day'
+                )}
               </p>
-              <div className="flex justify-center mt-2 gap-1">
-                <span className="text-2xl animate-pulse">🎄</span>
-                <span className="text-2xl animate-pulse" style={{ animationDelay: '0.2s' }}>✨</span>
-                <span className="text-2xl animate-pulse" style={{ animationDelay: '0.4s' }}>🎁</span>
-              </div>
             </div>
           </div>
         </div>
@@ -843,6 +830,33 @@ function Home({ username: propUsername = '' }) {
           
           {/* Message Grid */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-16 sm:pb-20">
+            {/* Letter Count Message */}
+            {messages.length > 0 && messages.length < 10 && (
+              <div className="text-center mb-6 sm:mb-8 md:mb-10">
+                <div 
+                  className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 240, 0.95) 100%)',
+                    border: '2px solid rgba(220, 38, 38, 0.3)',
+                    boxShadow: '0 8px 32px rgba(220, 38, 38, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.5)',
+                  }}
+                >
+                  <p 
+                    className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight"
+                    style={{
+                      background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #f97316 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    {messages.length}/10 letters until the reveal! ✨
+                  </p>
+                </div>
+              </div>
+            )}
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 {/* Empty Inbox Message */}
