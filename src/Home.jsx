@@ -586,15 +586,15 @@ function Home({ username: propUsername = '' }) {
             >
               <p 
                 className={`text-base sm:text-lg md:text-xl font-bold text-center ${
-                  messages.length < 10 ? 'text-red-600' : 'text-gray-900'
+                  messages.length < 5 ? 'text-red-600' : 'text-gray-900'
                 }`}
                 style={{
                   textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                 }}
               >
-                {messages.length < 10 ? (
+                {messages.length < 5 ? (
                   <>
-                    Receive {10 - messages.length} more letter{10 - messages.length !== 1 ? 's' : ''} to see letter
+                    Receive {5 - messages.length} more letter{5 - messages.length !== 1 ? 's' : ''} to see letter
                   </>
                 ) : (
                   'Letter will be delivered to you on the X-Mas day'
@@ -831,7 +831,7 @@ function Home({ username: propUsername = '' }) {
           {/* Message Grid */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-16 sm:pb-20">
             {/* Letter Count Message */}
-            {messages.length > 0 && messages.length < 10 && (
+            {messages.length > 0 && messages.length < 5 && (
               <div className="text-center mb-6 sm:mb-8 md:mb-10">
                 <div 
                   className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
@@ -852,7 +852,7 @@ function Home({ username: propUsername = '' }) {
                       letterSpacing: '-0.02em',
                     }}
                   >
-                    {messages.length}/10 letters until the reveal! ✨
+                    {messages.length}/5 letters until the reveal! ✨
                   </p>
                 </div>
               </div>
