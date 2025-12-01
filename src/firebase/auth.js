@@ -16,7 +16,6 @@ import {
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from './config'
-import { createDefaultWelcomeMessage } from './messages'
 
 /**
  * Check if username is available
@@ -143,14 +142,6 @@ export const signUp = async (username, email, password, profilePictureFile = nul
     }
 
     await setDoc(doc(db, 'users', user.uid), userDoc)
-
-    // Create default welcome message for new user
-    try {
-      await createDefaultWelcomeMessage(user.uid, username.trim())
-    } catch (error) {
-      // Don't fail signup if welcome message creation fails
-      console.warn('Failed to create welcome message:', error)
-    }
 
     return { 
       success: true, 
