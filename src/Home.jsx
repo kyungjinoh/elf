@@ -22,6 +22,7 @@ function Home({ username: propUsername = '' }) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showLetterPopup, setShowLetterPopup] = useState(false)
   const [views, setViews] = useState([])
+  const [christmasCountdown, setChristmasCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const textInputRef = useRef(null)
   const textContainerRef = useRef(null)
   const navBarRef = useRef(null)
@@ -190,6 +191,41 @@ function Home({ username: propUsername = '' }) {
     refreshViewsCount()
     const refreshInterval = setInterval(refreshViewsCount, 10000)
     return () => clearInterval(refreshInterval)
+  }, [])
+
+  // Calculate countdown to Christmas
+  useEffect(() => {
+    const calculateCountdown = () => {
+      const now = new Date()
+      const currentYear = now.getFullYear()
+      let christmas = new Date(currentYear, 11, 25) // December 25 (month is 0-indexed)
+      
+      // If Christmas has passed this year, set it to next year
+      if (now > christmas) {
+        christmas = new Date(currentYear + 1, 11, 25)
+      }
+
+      const diff = christmas - now
+      
+      if (diff <= 0) {
+        setChristmasCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+        return
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+      setChristmasCountdown({ days, hours, minutes, seconds })
+    }
+
+    // Calculate immediately
+    calculateCountdown()
+
+    // Update every second
+    const interval = setInterval(calculateCountdown, 1000)
+    return () => clearInterval(interval)
   }, [])
 
   // Generate dynamic link
@@ -830,6 +866,90 @@ function Home({ username: propUsername = '' }) {
           
           {/* Message Grid */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-16 sm:pb-20">
+            {/* Christmas Countdown - Only show when 5 letters are received */}
+            {messages.length >= 5 && (
+              <div className="text-center mb-6 sm:mb-8 md:mb-10">
+                <div 
+                  className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 240, 0.95) 100%)',
+                    border: '2px solid rgba(220, 38, 38, 0.3)',
+                    boxShadow: '0 8px 32px rgba(220, 38, 38, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.5)',
+                  }}
+                >
+                  <p 
+                    className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3"
+                    style={{
+                      color: '#be2616',
+                    }}
+                  >
+                    🎄 Countdown to Christmas 🎄
+                  </p>
+                  <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4">
+                    {christmasCountdown.days > 0 && (
+                      <div className="flex flex-col items-center">
+                        <span 
+                          className="text-2xl sm:text-3xl md:text-4xl font-extrabold"
+                          style={{
+                            background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #f97316 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                          }}
+                        >
+                          {christmasCountdown.days}
+                        </span>
+                        <span className="text-xs sm:text-sm text-gray-600 font-medium">days</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center">
+                      <span 
+                        className="text-2xl sm:text-3xl md:text-4xl font-extrabold"
+                        style={{
+                          background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #f97316 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        {String(christmasCountdown.hours).padStart(2, '0')}
+                      </span>
+                      <span className="text-xs sm:text-sm text-gray-600 font-medium">hours</span>
+                    </div>
+                    <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: '#dc2626' }}>:</span>
+                    <div className="flex flex-col items-center">
+                      <span 
+                        className="text-2xl sm:text-3xl md:text-4xl font-extrabold"
+                        style={{
+                          background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #f97316 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        {String(christmasCountdown.minutes).padStart(2, '0')}
+                      </span>
+                      <span className="text-xs sm:text-sm text-gray-600 font-medium">minutes</span>
+                    </div>
+                    <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: '#dc2626' }}>:</span>
+                    <div className="flex flex-col items-center">
+                      <span 
+                        className="text-2xl sm:text-3xl md:text-4xl font-extrabold"
+                        style={{
+                          background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #f97316 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        {String(christmasCountdown.seconds).padStart(2, '0')}
+                      </span>
+                      <span className="text-xs sm:text-sm text-gray-600 font-medium">seconds</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Letter Count Message */}
             {messages.length > 0 && messages.length < 5 && (
               <div className="text-center mb-6 sm:mb-8 md:mb-10">
