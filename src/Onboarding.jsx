@@ -472,7 +472,7 @@ function Onboarding({ onGetStarted }) {
                   2
                 </div>
                 <p className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 flex-1">
-                  Share Your Link and Receive X-mas Letters
+                  Share Your Link to Your IG / Snapchat Story and Receive X-mas Letters
                 </p>
               </div>
 
