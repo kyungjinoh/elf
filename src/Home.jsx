@@ -1007,8 +1007,8 @@ function Home({ username: propUsername = '' }) {
                 </div>
               </div>
             )}
-            {/* Letter Count Message */}
-            {messages.length > 0 && messages.length < 5 && (
+            {/* Letter Count Message - Hide if reveal is true */}
+            {messages.length > 0 && messages.length < 5 && !userReveal && (
               <div className="text-center mb-6 sm:mb-8 md:mb-10">
                 <div 
                   className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
