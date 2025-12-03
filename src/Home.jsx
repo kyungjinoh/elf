@@ -21,6 +21,8 @@ function Home({ username: propUsername = '' }) {
   const [messages, setMessages] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [showLetterPopup, setShowLetterPopup] = useState(false)
+  const [selectedMessage, setSelectedMessage] = useState(null)
+  const [userReveal, setUserReveal] = useState(false)
   const [views, setViews] = useState([])
   const [christmasCountdown, setChristmasCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const textInputRef = useRef(null)
@@ -119,6 +121,13 @@ function Home({ username: propUsername = '' }) {
             } catch (error) {
               console.error('Error saving default cardText:', error)
             }
+          }
+
+          // Load reveal field (handle both boolean true and string "true")
+          if (result.user.reveal === true || result.user.reveal === "true") {
+            setUserReveal(true)
+          } else {
+            setUserReveal(false)
           }
         }
       } catch (error) {
@@ -280,6 +289,8 @@ function Home({ username: propUsername = '' }) {
   }
 
   const handleMessageClick = async (message) => {
+    // Store selected message
+    setSelectedMessage(message)
     // Show popup
     setShowLetterPopup(true)
     
@@ -303,7 +314,41 @@ function Home({ username: propUsername = '' }) {
 
   const handleCloseLetterPopup = () => {
     setShowLetterPopup(false)
+    setSelectedMessage(null)
   }
+
+  // Check if messages should be revealed
+  const shouldRevealMessages = () => {
+    // If user's reveal field is true, always reveal (including before Christmas)
+    if (userReveal === true) {
+      return true
+    }
+    
+    // Otherwise, only reveal on or after Christmas
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    let christmas = new Date(currentYear, 11, 25) // December 25 (month is 0-indexed)
+    
+    // If Christmas has passed this year, check next year's Christmas
+    if (now > new Date(currentYear, 11, 26)) {
+      christmas = new Date(currentYear + 1, 11, 25)
+    }
+    
+    // Reveal if it's Christmas or after
+    return now >= christmas
+  }
+
+  // Debug: Log reveal status when popup is shown
+  useEffect(() => {
+    if (showLetterPopup && selectedMessage) {
+      console.log('Reveal check:', {
+        userReveal,
+        shouldReveal: shouldRevealMessages(),
+        hasSelectedMessage: !!selectedMessage,
+        messageContent: selectedMessage?.message
+      })
+    }
+  }, [showLetterPopup, selectedMessage, userReveal])
 
   const handleCloseInbox = () => {
     setIsClosingInbox(true)
@@ -598,7 +643,7 @@ function Home({ username: propUsername = '' }) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Main Message - Shows cardText */}
+            {/* Main Message - Always shows cardText */}
             <div className="text-center mb-6 sm:mb-8 relative z-10">
               <p 
                 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-relaxed tracking-tight break-words drop-shadow-lg"
@@ -610,7 +655,7 @@ function Home({ username: propUsername = '' }) {
               </p>
             </div>
 
-            {/* Input Field Style Box - Exciting reveal message */}
+            {/* Input Field Style Box - Shows message content if revealed, otherwise shows status message */}
             <div 
               className="rounded-xl sm:rounded-2xl p-4 sm:p-5 relative z-10"
               style={{
@@ -620,22 +665,34 @@ function Home({ username: propUsername = '' }) {
                 animation: 'pulseGlow 2s ease-in-out infinite',
               }}
             >
-              <p 
-                className={`text-base sm:text-lg md:text-xl font-bold text-center ${
-                  messages.length < 5 ? 'text-red-600' : 'text-gray-900'
-                }`}
-                style={{
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                {messages.length < 5 ? (
-                  <>
-                    Receive {5 - messages.length} more letter{5 - messages.length !== 1 ? 's' : ''} to see letter
-                  </>
-                ) : (
-                  'Letter will be delivered to you on the X-Mas day'
-                )}
-              </p>
+              {shouldRevealMessages() && selectedMessage && selectedMessage.message ? (
+                <p 
+                  className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
+                  style={{
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  {selectedMessage.message}
+                </p>
+              ) : messages.length < 5 ? (
+                <p 
+                  className="text-base sm:text-lg md:text-xl font-bold text-center text-red-600"
+                  style={{
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  Receive {5 - messages.length} more letter{5 - messages.length !== 1 ? 's' : ''} to see letter
+                </p>
+              ) : (
+                <p 
+                  className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
+                  style={{
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  Letter will be delivered to you on the X-Mas day
+                </p>
+              )}
             </div>
           </div>
         </div>
