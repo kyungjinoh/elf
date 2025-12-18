@@ -5,7 +5,7 @@ import { getUserIP } from './utils'
 /**
  * Send a message to a user's inbox
  */
-export const sendMessage = async (recipientUsername, messageText) => {
+export const sendMessage = async (recipientUsername, messageText, nickname = null) => {
   try {
     if (!messageText || !messageText.trim()) {
       return { success: false, error: 'Message cannot be empty' }
@@ -40,6 +40,7 @@ export const sendMessage = async (recipientUsername, messageText) => {
       read: false,
       createdAt: new Date().toISOString(),
       ipAddress: userIP || null, // Store IP address
+      nickname: nickname || null, // Store nickname (optional)
     }
 
     const docRef = await addDoc(messagesRef, messageData)

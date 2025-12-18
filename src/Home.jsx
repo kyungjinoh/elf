@@ -655,6 +655,20 @@ function Home({ username: propUsername = '' }) {
               </p>
             </div>
 
+            {/* Nickname Display - Always visible if nickname exists */}
+            {selectedMessage && selectedMessage.nickname && (
+              <div className="text-center mb-4 sm:mb-6 relative z-10">
+                <p 
+                  className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-semibold leading-relaxed tracking-tight break-words drop-shadow-lg"
+                  style={{
+                    textShadow: '0 0 8px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                  }}
+                >
+                  From: {selectedMessage.nickname}
+                </p>
+              </div>
+            )}
+
             {/* Input Field Style Box - Shows message content if revealed, otherwise shows status message */}
             <div 
               className="rounded-xl sm:rounded-2xl p-4 sm:p-5 relative z-10"

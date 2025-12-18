@@ -9,6 +9,7 @@ function LetterPage() {
   const { username } = useParams()
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
+  const [nickname, setNickname] = useState('')
   const [showMessageSent, setShowMessageSent] = useState(false)
   const [countdown, setCountdown] = useState(5)
   const [profilePictureUrl, setProfilePictureUrl] = useState('/letter.png')
@@ -25,12 +26,13 @@ function LetterPage() {
     
     try {
       // Send message to recipient's inbox
-      const result = await sendMessage(username, message)
+      const result = await sendMessage(username, message, nickname.trim() || null)
       
       if (result.success) {
         setShowMessageSent(true)
         setCountdown(5) // Reset countdown when message is sent
         setMessage('') // Clear the message
+        setNickname('') // Clear the nickname
       } else {
         alert(result.error || 'Failed to send message')
       }
@@ -317,6 +319,24 @@ function LetterPage() {
             backdropFilter: 'blur(10px)',
           }}
         >
+          {/* Nickname Input Area */}
+          <div className="mb-3">
+            <input
+              type="text"
+              placeholder="Nickname (optional)"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className="py-1 pt-1 bg-transparent border-none outline-none text-gray-700 font-normal text-sm sm:text-base md:text-sm lg:text-base placeholder-gray-500 italic resize-none align-top"
+              style={{ 
+                verticalAlign: 'top', 
+                width: '100%', 
+                paddingLeft: '2%', 
+                paddingRight: '2%',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.2)',
+              }}
+            />
+          </div>
+          
           {/* Text Input Area */}
           <div className="mb-2">
             <textarea
