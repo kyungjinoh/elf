@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser, uploadProfilePicture } from './firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
@@ -317,10 +317,46 @@ function Home({ username: propUsername = '' }) {
     setSelectedMessage(null)
   }
 
-  // Check if messages should be revealed
-  const shouldRevealMessages = () => {
+  // Find the chronologically 2nd and 5th letters (by creation date) for early reveal
+  const earlyRevealLetterIds = useMemo(() => {
+    const ids = new Set()
+    
+    if (messages.length < 2) return ids
+    
+    // Sort messages chronologically (oldest first)
+    const sortedMessages = [...messages].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateA - dateB // Ascending order (oldest first)
+    })
+    
+    // Add the 2nd letter (index 1) if it exists
+    if (sortedMessages[1]) {
+      ids.add(sortedMessages[1].id)
+    }
+    
+    // Add the 5th letter (index 4) if it exists
+    if (sortedMessages[4]) {
+      ids.add(sortedMessages[4].id)
+    }
+    
+    return ids
+  }, [messages])
+
+  // Check if a specific message is an early reveal letter (chronologically 2nd or 5th)
+  const isEarlyRevealLetter = (messageId) => {
+    return earlyRevealLetterIds.has(messageId)
+  }
+
+  // Check if a specific message should be revealed (early reveal for second letter)
+  const shouldRevealMessage = (messageId) => {
     // If user's reveal field is true, always reveal (including before Christmas)
     if (userReveal === true) {
+      return true
+    }
+    
+    // Chronologically 2nd and 5th letters are always revealed (Early Reveal)
+    if (isEarlyRevealLetter(messageId)) {
       return true
     }
     
@@ -335,6 +371,29 @@ function Home({ username: propUsername = '' }) {
     }
     
     // Reveal if it's Christmas or after
+    return now >= christmas
+  }
+
+  // Check if messages should be revealed (for backward compatibility)
+  const shouldRevealMessages = () => {
+    // Check if selected message is an early reveal letter (2nd or 5th)
+    if (selectedMessage) {
+      return shouldRevealMessage(selectedMessage.id)
+    }
+    
+    // Fallback to original logic
+    if (userReveal === true) {
+      return true
+    }
+    
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    let christmas = new Date(currentYear, 11, 25)
+    
+    if (now > new Date(currentYear, 11, 26)) {
+      christmas = new Date(currentYear + 1, 11, 25)
+    }
+    
     return now >= christmas
   }
 
@@ -609,7 +668,7 @@ function Home({ username: propUsername = '' }) {
       {/* Letter Popup - Shows when message is clicked */}
       {showLetterPopup && (
         <div 
-          className="fixed inset-0 z-[80] flex items-center justify-center px-4"
+          className="fixed inset-0 z-[80] flex flex-col items-center justify-center px-4 py-6 sm:py-8"
           style={{
             backgroundColor: 'rgba(0, 0, 0, 0.6)',
             backdropFilter: 'blur(6px)',
@@ -679,36 +738,63 @@ function Home({ username: propUsername = '' }) {
                 animation: 'pulseGlow 2s ease-in-out infinite',
               }}
             >
-              {shouldRevealMessages() && selectedMessage && selectedMessage.message ? (
-                <p 
-                  className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
-                  style={{
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  {selectedMessage.message}
-                </p>
-              ) : messages.length < 5 ? (
-                <p 
-                  className="text-base sm:text-lg md:text-xl font-bold text-center text-red-600"
-                  style={{
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  Receive {5 - messages.length} more letter{5 - messages.length !== 1 ? 's' : ''} to see letter
-                </p>
-              ) : (
-                <p 
-                  className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
-                  style={{
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  Letter will be delivered to you on the X-Mas day
-                </p>
-              )}
+              {selectedMessage && (() => {
+                const isEarlyReveal = isEarlyRevealLetter(selectedMessage.id)
+                const isRevealed = shouldRevealMessage(selectedMessage.id)
+                
+                if (isRevealed && selectedMessage.message) {
+                  return (
+                    <>
+                      {isEarlyReveal && (
+                        <div className="mb-2 text-center">
+                          <span className="inline-block text-xs sm:text-sm font-bold text-yellow-800 bg-yellow-200/90 px-3 py-1 rounded-md">
+                            🎁 Early Reveal 🎁
+                          </span>
+                        </div>
+                      )}
+                      <p 
+                        className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
+                        style={{
+                          textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                        }}
+                      >
+                        {selectedMessage.message}
+                      </p>
+                    </>
+                  )
+                } else {
+                  return (
+                    <p 
+                      className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
+                      style={{
+                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                      }}
+                    >
+                      Letter will be revealed on Christmas
+                    </p>
+                  )
+                }
+              })()}
             </div>
+            
+            {/* elfletter.app text at bottom of card - only for early reveal */}
+            {selectedMessage && isEarlyRevealLetter(selectedMessage.id) && (
+              <div className="mt-4 sm:mt-5 text-center relative z-10">
+                <p className="text-sm sm:text-base text-white/90 font-medium">
+                  elfletter.app
+                </p>
+              </div>
+            )}
           </div>
+          
+          {/* Take a screenshot text - only for early reveal, at bottom of page */}
+          {selectedMessage && isEarlyRevealLetter(selectedMessage.id) && (
+            <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 text-center z-10 px-4">
+              <p className="text-base sm:text-lg md:text-xl text-white font-medium drop-shadow-lg">
+                Take a screenshot and share in your Story
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -937,8 +1023,8 @@ function Home({ username: propUsername = '' }) {
           
           {/* Message Grid */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-16 sm:pb-20">
-            {/* Christmas Countdown - Only show when 5 letters are received */}
-            {messages.length >= 5 && (
+            {/* Christmas Countdown */}
+            {messages.length > 0 && (
               <div className="text-center mb-6 sm:mb-8 md:mb-10">
                 <div 
                   className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
@@ -954,7 +1040,7 @@ function Home({ username: propUsername = '' }) {
                       color: '#be2616',
                     }}
                   >
-                    🎄 Countdown to Christmas 🎄
+                    🎄 Letter Reveal In 🎄
                   </p>
                   <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4">
                     {christmasCountdown.days > 0 && (
@@ -1021,33 +1107,6 @@ function Home({ username: propUsername = '' }) {
                 </div>
               </div>
             )}
-            {/* Letter Count Message - Hide if reveal is true */}
-            {messages.length > 0 && messages.length < 5 && !userReveal && (
-              <div className="text-center mb-6 sm:mb-8 md:mb-10">
-                <div 
-                  className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 240, 0.95) 100%)',
-                    border: '2px solid rgba(220, 38, 38, 0.3)',
-                    boxShadow: '0 8px 32px rgba(220, 38, 38, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.5)',
-                  }}
-                >
-                  <p 
-                    className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight"
-                    style={{
-                      background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #f97316 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
-                    {messages.length}/5 letters until the reveal! ✨
-                  </p>
-                </div>
-              </div>
-            )}
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 {/* Empty Inbox Message */}
@@ -1075,40 +1134,57 @@ function Home({ username: propUsername = '' }) {
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                {messages.map((message, index) => (
-                  <div
-                    key={message.id}
-                    onClick={() => handleMessageClick(message)}
-                    className={`aspect-square rounded-xl flex items-center justify-center shadow-md cursor-pointer transition-all duration-200 hover:scale-105 ${
-                      !message.read 
-                        ? '' 
-                        : 'bg-gray-200'
-                    }`}
-                    style={
-                      !message.read
-                        ? {
-                            background: 'linear-gradient(to bottom, #ec4899, #f97316)',
-                          }
-                        : {}
-                    }
-                  >
-                    <div className="relative w-full h-full flex items-center justify-center p-2">
-                      <img
-                        src="/loveletter.png"
-                        alt="Love Letter"
-                        className={`h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 object-contain ${
-                          message.read ? 'opacity-70' : ''
-                        }`}
-                        onError={(e) => {
-                          e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3ELetter%3C/text%3E%3C/svg%3E'
-                        }}
-                      />
-                      {!message.read && (
-                        <div className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-                      )}
+                {messages.map((message, index) => {
+                  const isEarlyReveal = isEarlyRevealLetter(message.id) // Check if this is chronologically second letter
+                  const isUnread = !message.read
+                  
+                  return (
+                    <div
+                      key={message.id}
+                      onClick={() => handleMessageClick(message)}
+                      className={`aspect-square rounded-xl flex items-center justify-center shadow-md cursor-pointer transition-all duration-200 hover:scale-105 ${
+                        message.read
+                          ? 'bg-gray-200'
+                          : ''
+                      }`}
+                      style={
+                        isEarlyReveal && isUnread
+                          ? {
+                              background: 'linear-gradient(to bottom, #fbbf24, #f59e0b)',
+                              border: '3px solid #fbbf24',
+                            }
+                          : !isEarlyReveal && isUnread
+                          ? {
+                              background: 'linear-gradient(to bottom, #ec4899, #f97316)',
+                            }
+                          : {}
+                      }
+                    >
+                      <div className="relative w-full h-full flex flex-col items-center justify-center p-2">
+                        <img
+                          src="/loveletter.png"
+                          alt="Love Letter"
+                          className={`h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 object-contain ${
+                            message.read ? 'opacity-70' : ''
+                          }`}
+                          onError={(e) => {
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect width="96" height="96" fill="%23ddd" rx="48"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3ELetter%3C/text%3E%3C/svg%3E'
+                          }}
+                        />
+                        {isEarlyReveal && (
+                          <div className="absolute bottom-1 left-1 right-1">
+                            <span className="text-[8px] sm:text-[10px] md:text-xs font-bold text-yellow-800 bg-yellow-200/90 px-1.5 py-0.5 rounded-md">
+                              Early Reveal
+                            </span>
+                          </div>
+                        )}
+                        {isUnread && !isEarlyReveal && (
+                          <div className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
