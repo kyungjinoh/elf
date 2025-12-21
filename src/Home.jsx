@@ -348,7 +348,7 @@ function Home({ username: propUsername = '' }) {
     return earlyRevealLetterIds.has(messageId)
   }
 
-  // Check if a specific message should be revealed (early reveal for second letter)
+  // Check if a specific message should be revealed (early reveal for 2nd and 5th letters)
   const shouldRevealMessage = (messageId) => {
     // If user's reveal field is true, always reveal (including before Christmas)
     if (userReveal === true) {
@@ -360,7 +360,12 @@ function Home({ username: propUsername = '' }) {
       return true
     }
     
-    // Otherwise, only reveal on or after Christmas
+    // For other letters, need at least 5 letters AND it must be Christmas
+    if (messages.length < 5) {
+      return false
+    }
+    
+    // Check if it's Christmas or after
     const now = new Date()
     const currentYear = now.getFullYear()
     let christmas = new Date(currentYear, 11, 25) // December 25 (month is 0-indexed)
@@ -763,16 +768,30 @@ function Home({ username: propUsername = '' }) {
                     </>
                   )
                 } else {
-                  return (
-                    <p 
-                      className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
-                      style={{
-                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-                      }}
-                    >
-                      Letter will be revealed on Christmas
-                    </p>
-                  )
+                  // Show appropriate message based on letter count
+                  if (messages.length < 5) {
+                    return (
+                      <p 
+                        className="text-base sm:text-lg md:text-xl font-bold text-center text-red-600"
+                        style={{
+                          textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                        }}
+                      >
+                        Receive {5 - messages.length} more letter{5 - messages.length !== 1 ? 's' : ''} to see letter
+                      </p>
+                    )
+                  } else {
+                    return (
+                      <p 
+                        className="text-base sm:text-lg md:text-xl font-bold text-center text-gray-900"
+                        style={{
+                          textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                        }}
+                      >
+                        Letter will be revealed on Christmas
+                      </p>
+                    )
+                  }
                 }
               })()}
             </div>
@@ -1023,8 +1042,8 @@ function Home({ username: propUsername = '' }) {
           
           {/* Message Grid */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-16 sm:pb-20">
-            {/* Christmas Countdown */}
-            {messages.length > 0 && (
+            {/* Christmas Countdown - Only show when 5 letters are received */}
+            {messages.length >= 5 && (
               <div className="text-center mb-6 sm:mb-8 md:mb-10">
                 <div 
                   className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
@@ -1104,6 +1123,33 @@ function Home({ username: propUsername = '' }) {
                       <span className="text-xs sm:text-sm text-gray-600 font-medium">seconds</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+            {/* Letter Count Message - Show when less than 5 letters and reveal is not enabled */}
+            {messages.length > 0 && messages.length < 5 && !userReveal && (
+              <div className="text-center mb-6 sm:mb-8 md:mb-10">
+                <div 
+                  className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-lg backdrop-blur-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 240, 0.95) 100%)',
+                    border: '2px solid rgba(220, 38, 38, 0.3)',
+                    boxShadow: '0 8px 32px rgba(220, 38, 38, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.5)',
+                  }}
+                >
+                  <p 
+                    className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight"
+                    style={{
+                      background: 'linear-gradient(135deg, #be2616 0%, #dc2626 50%, #f97316 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    {messages.length}/5 letters until the reveal! ✨
+                  </p>
                 </div>
               </div>
             )}
