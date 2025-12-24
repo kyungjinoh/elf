@@ -202,19 +202,45 @@ function Home({ username: propUsername = '' }) {
     return () => clearInterval(refreshInterval)
   }, [])
 
-  // Calculate countdown to Christmas
+  // Calculate countdown to Christmas (0:00 EST on December 25th)
   useEffect(() => {
     const calculateCountdown = () => {
       const now = new Date()
-      const currentYear = now.getFullYear()
-      let christmas = new Date(currentYear, 11, 25) // December 25 (month is 0-indexed)
       
-      // If Christmas has passed this year, set it to next year
-      if (now > christmas) {
-        christmas = new Date(currentYear + 1, 11, 25)
+      // Get current time in EST (America/New_York timezone)
+      const estFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      })
+      
+      const nowESTParts = estFormatter.formatToParts(now)
+      const nowESTYear = parseInt(nowESTParts.find(p => p.type === 'year').value)
+      const nowESTMonth = parseInt(nowESTParts.find(p => p.type === 'month').value)
+      const nowESTDay = parseInt(nowESTParts.find(p => p.type === 'day').value)
+      const nowESTHour = parseInt(nowESTParts.find(p => p.type === 'hour').value)
+      const nowESTMinute = parseInt(nowESTParts.find(p => p.type === 'minute').value)
+      const nowESTSecond = parseInt(nowESTParts.find(p => p.type === 'second').value)
+      
+      // Determine target year: if we've passed Dec 25 00:00 EST this year, use next year
+      let targetYear = nowESTYear
+      if (nowESTMonth > 12 || 
+          (nowESTMonth === 12 && nowESTDay > 25) || 
+          (nowESTMonth === 12 && nowESTDay === 25 && (nowESTHour > 0 || nowESTMinute > 0 || nowESTSecond > 0))) {
+        targetYear = nowESTYear + 1
       }
-
-      const diff = christmas - now
+      
+      // Create target date: December 25, 00:00:00 EST
+      // EST is UTC-5, so 00:00 EST = 05:00 UTC
+      // Use Date.UTC to create the target time in UTC, then convert
+      const targetUTC = new Date(Date.UTC(targetYear, 11, 25, 5, 0, 0)) // Dec 25, 05:00 UTC = Dec 25, 00:00 EST
+      
+      const diff = targetUTC - now
       
       if (diff <= 0) {
         setChristmasCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -365,18 +391,21 @@ function Home({ username: propUsername = '' }) {
       return false
     }
     
-    // Check if it's Christmas or after
+    // Check if it's Christmas or after (0:00 EST on December 25th)
     const now = new Date()
     const currentYear = now.getFullYear()
-    let christmas = new Date(currentYear, 11, 25) // December 25 (month is 0-indexed)
     
-    // If Christmas has passed this year, check next year's Christmas
-    if (now > new Date(currentYear, 11, 26)) {
-      christmas = new Date(currentYear + 1, 11, 25)
+    // Create target date: December 25, 00:00 EST
+    // EST is UTC-5, so 00:00 EST = 05:00 UTC
+    let christmasEST = new Date(Date.UTC(currentYear, 11, 25, 5, 0, 0)) // Dec 25, 05:00 UTC = Dec 25, 00:00 EST
+    
+    // If Christmas has passed this year, use next year's Christmas
+    if (now > christmasEST) {
+      christmasEST = new Date(Date.UTC(currentYear + 1, 11, 25, 5, 0, 0))
     }
     
-    // Reveal if it's Christmas or after
-    return now >= christmas
+    // Reveal if it's December 25, 00:00 EST or later
+    return now >= christmasEST
   }
 
   // Check if messages should be revealed (for backward compatibility)
@@ -386,20 +415,23 @@ function Home({ username: propUsername = '' }) {
       return shouldRevealMessage(selectedMessage.id)
     }
     
-    // Fallback to original logic
+    // Fallback to original logic (using EST)
     if (userReveal === true) {
       return true
     }
     
     const now = new Date()
     const currentYear = now.getFullYear()
-    let christmas = new Date(currentYear, 11, 25)
     
-    if (now > new Date(currentYear, 11, 26)) {
-      christmas = new Date(currentYear + 1, 11, 25)
+    // Create target date: December 25, 00:00 EST
+    // EST is UTC-5, so 00:00 EST = 05:00 UTC
+    let christmasEST = new Date(Date.UTC(currentYear, 11, 25, 5, 0, 0))
+    
+    if (now > christmasEST) {
+      christmasEST = new Date(Date.UTC(currentYear + 1, 11, 25, 5, 0, 0))
     }
     
-    return now >= christmas
+    return now >= christmasEST
   }
 
   // Debug: Log reveal status when popup is shown
